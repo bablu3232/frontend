@@ -1,0 +1,519 @@
+package com.simats.drugssearch.ui
+
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.CircleShape
+import com.simats.drugssearch.R
+
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Upload
+import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.*
+import kotlinx.coroutines.launch
+import com.simats.drugssearch.ui.theme.DrugsSearchTheme
+
+// Review Values Screen Colors
+private val PrimaryBlue = Color(0xFF3B82F6)
+private val BackgroundColor = Color(0xFFF8FAFC)
+private val TextDarkColor = Color(0xFF1E293B)
+private val TextGrayColor = Color(0xFF64748B)
+private val CardBorderColor = Color(0xFFE2E8F0)
+private val DisclaimerBackground = Color(0xFFF1F5F9)
+private val GreenColor = Color(0xFF22C55E)
+private val GreenBg = Color(0xFFDCFCE7)
+private val GreenBorder = Color(0xFF86EFAC)
+
+@Composable
+fun ReviewValuesScreen(
+    userId: Int, // Added userId
+    categoryName: String = "Blood Count",
+    values: Map<String, String> = mapOf(
+        "Hemoglobin" to "323",
+        "Wbc" to "434",
+        "Rbc" to "2424",
+        "Platelets" to "242",
+        "Hematocrit" to "241.1"
+    ),
+    onBackClick: () -> Unit = {},
+    onHomeClick: () -> Unit = {},
+    onEditClick: () -> Unit = {},
+    onBackToEditClick: () -> Unit = {},
+    onSubmitForAnalysisClick: () -> Unit = {},
+    onSearchClick: () -> Unit = {},
+    onHistoryClick: () -> Unit = {},
+    onProfileClick: () -> Unit = {}
+) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var isLoading by remember { mutableStateOf(false) }
+
+    Scaffold(
+        bottomBar = {
+            ReviewValuesBottomNav(
+                onHomeClick = onHomeClick,
+                onUploadClick = { },
+                onSearchClick = onSearchClick,
+                onHistoryClick = onHistoryClick,
+                onProfileClick = onProfileClick
+            )
+        },
+        containerColor = BackgroundColor
+    ) { paddingValues ->
+        Box(modifier = Modifier.fillMaxSize()) { // Wrap content in Box for loading overlay
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+
+            ) {
+                // Top App Bar
+                ReviewValuesTopBar(
+                    onBackClick = onBackClick,
+                    onHomeClick = onHomeClick
+                )
+
+                // Scrollable Content
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 24.dp)
+                ) {
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Title
+                    Text(
+                        text = "Review Entered Values",
+                        style = MaterialTheme.typography.headlineMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 24.sp
+                        ),
+                        color = TextDarkColor
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = "Confirm your test results before submission",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontSize = 15.sp
+                        ),
+                        color = TextGrayColor
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Values Card
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .border(1.dp, CardBorderColor, RoundedCornerShape(16.dp)),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(20.dp)
+                        ) {
+                            // Header with Edit button
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = categoryName,
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 18.sp
+                                    ),
+                                    color = TextDarkColor
+                                )
+
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.clickable { onEditClick() }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Edit,
+                                        contentDescription = "Edit",
+                                        tint = PrimaryBlue,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = "Edit",
+                                        style = MaterialTheme.typography.bodyMedium.copy(
+                                            fontWeight = FontWeight.Medium,
+                                            fontSize = 14.sp
+                                        ),
+                                        color = PrimaryBlue
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(20.dp))
+
+                            // Values List
+                            values.forEach { (label, value) ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 12.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        text = label,
+                                        style = MaterialTheme.typography.bodyMedium.copy(
+                                            fontSize = 15.sp
+                                        ),
+                                        color = TextDarkColor
+                                    )
+                                    Text(
+                                        text = value,
+                                        style = MaterialTheme.typography.bodyMedium.copy(
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontSize = 15.sp
+                                        ),
+                                        color = TextDarkColor
+                                    )
+                                }
+                                if (label != values.keys.last()) {
+                                    HorizontalDivider(color = CardBorderColor)
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Info Card
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .border(1.dp, GreenBorder, RoundedCornerShape(12.dp)),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = GreenBg),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.Top
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = null,
+                                tint = GreenColor,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = "Your blood count data will be analyzed securely. Results will be available in a few seconds.",
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    fontSize = 12.sp,
+                                    lineHeight = 16.sp
+                                ),
+                                color = TextGrayColor
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Buttons
+                    Button(
+                        onClick = {
+                            if (isLoading) return@Button
+                            isLoading = true
+                            scope.launch {
+                                // Simulate API call or perform actual call
+                                onSubmitForAnalysisClick()
+                                isLoading = false
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = PrimaryBlue
+                        )
+                    ) {
+                        if (isLoading) {
+                            CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                        } else {
+                            Text(
+                                text = "Submit for Analysis",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    OutlinedButton(
+                        onClick = onBackToEditClick,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, PrimaryBlue),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = PrimaryBlue
+                        )
+                    ) {
+                         Text(
+                            text = "Back to Edit",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Links
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Privacy Policy",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium
+                            ),
+                            color = PrimaryBlue,
+                            modifier = Modifier.clickable { }
+                        )
+                        Text(
+                            text = "  •  ",
+                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                            color = TextGrayColor
+                        )
+                        Text(
+                            text = "Terms of Service",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium
+                            ),
+                            color = PrimaryBlue,
+                            modifier = Modifier.clickable { }
+                        )
+                    Text(
+                        text = "  •  ",
+                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                        color = TextGrayColor
+                    )
+                    Text(
+                        text = "Contact Us",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium
+                        ),
+                        color = PrimaryBlue,
+                        modifier = Modifier.clickable { }
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Copyright
+                Text(
+                    text = "© 2026 DrugSearch. All rights reserved.",
+                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                    color = TextGrayColor,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+        }
+    }
+}
+}
+
+@Composable
+private fun ReviewValuesTopBar(
+    onBackClick: () -> Unit,
+    onHomeClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IconButton(
+            onClick = onBackClick,
+            modifier = Modifier.size(40.dp)
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = "Back",
+                tint = TextDarkColor
+            )
+        }
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        // App Logo
+        Image(
+            painter = painterResource(id = R.drawable.logo_drugsearch),
+            contentDescription = "Logo",
+            modifier = Modifier
+                .size(60.dp)
+                .clip(CircleShape),
+            contentScale = ContentScale.Crop
+        )
+
+        Spacer(modifier = Modifier.width(4.dp))
+
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = "DrugSearch",
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
+                ),
+                color = TextDarkColor
+            )
+            Text(
+                text = "Your Medical Assistant",
+                style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                color = TextGrayColor
+            )
+        }
+
+        IconButton(onClick = onHomeClick) {
+            Icon(
+                imageVector = Icons.Default.Home,
+                contentDescription = "Home",
+                tint = TextGrayColor
+            )
+        }
+    }
+}
+
+@Composable
+private fun ReviewValuesBottomNav(
+    onHomeClick: () -> Unit,
+    onUploadClick: () -> Unit,
+    onSearchClick: () -> Unit,
+    onHistoryClick: () -> Unit,
+    onProfileClick: () -> Unit
+) {
+    NavigationBar(
+        containerColor = Color.White,
+        tonalElevation = 8.dp
+    ) {
+        NavigationBarItem(
+            selected = false,
+            onClick = onHomeClick,
+            icon = { Icon(Icons.Default.Home, "Home") },
+            label = { Text("Home") },
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = PrimaryBlue,
+                selectedTextColor = PrimaryBlue,
+                unselectedIconColor = TextDarkColor,
+                                     unselectedTextColor = TextDarkColor,
+                                     indicatorColor = Color.White
+            )
+        )
+        NavigationBarItem(
+            selected = true,
+            onClick = onUploadClick,
+            icon = { Icon(Icons.Default.Upload, "Upload") },
+            label = { Text("Upload") },
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = PrimaryBlue,
+                selectedTextColor = PrimaryBlue,
+                unselectedIconColor = TextDarkColor,
+                                     unselectedTextColor = TextDarkColor,
+                                     indicatorColor = Color.White
+            )
+        )
+        NavigationBarItem(
+            selected = false,
+            onClick = onSearchClick,
+            icon = { Icon(Icons.Default.Search, "Search") },
+            label = { Text("Search") },
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = PrimaryBlue,
+                selectedTextColor = PrimaryBlue,
+                unselectedIconColor = TextDarkColor,
+                                     unselectedTextColor = TextDarkColor,
+                                     indicatorColor = Color.White
+            )
+        )
+        NavigationBarItem(
+            selected = false,
+            onClick = onHistoryClick,
+            icon = { Icon(Icons.Default.History, "History") },
+            label = { Text("History") },
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = PrimaryBlue,
+                selectedTextColor = PrimaryBlue,
+                unselectedIconColor = TextDarkColor,
+                                     unselectedTextColor = TextDarkColor,
+                                     indicatorColor = Color.White
+            )
+        )
+        NavigationBarItem(
+            selected = false,
+            onClick = onProfileClick,
+            icon = { Icon(Icons.Default.Person, "Profile") },
+            label = { Text("Profile") },
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = PrimaryBlue,
+                selectedTextColor = PrimaryBlue,
+                unselectedIconColor = TextDarkColor,
+                                     unselectedTextColor = TextDarkColor,
+                                     indicatorColor = Color.White
+            )
+        )
+    }
+}
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+fun ReviewValuesScreenPreview() {
+    DrugsSearchTheme {
+        ReviewValuesScreen(userId = 1)
+    }
+}
