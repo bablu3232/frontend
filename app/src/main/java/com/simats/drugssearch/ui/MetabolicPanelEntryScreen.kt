@@ -57,6 +57,7 @@ data class MetabolicPanelValues(
 
 @Composable
 fun MetabolicPanelEntryScreen(
+    initialValues: MetabolicPanelValues = MetabolicPanelValues(),
     onBackClick: () -> Unit = {},
     onHomeClick: () -> Unit = {},
     onSubmitClick: (MetabolicPanelValues) -> Unit = {},
@@ -64,11 +65,11 @@ fun MetabolicPanelEntryScreen(
     onHistoryClick: () -> Unit = {},
     onProfileClick: () -> Unit = {}
 ) {
-    var bloodGlucose by remember { mutableStateOf("") }
-    var sodium by remember { mutableStateOf("") }
-    var potassium by remember { mutableStateOf("") }
-    var calcium by remember { mutableStateOf("") }
-    var bicarbonate by remember { mutableStateOf("") }
+    var bloodGlucose by remember { mutableStateOf(initialValues.bloodGlucose) }
+    var sodium by remember { mutableStateOf(initialValues.sodium) }
+    var potassium by remember { mutableStateOf(initialValues.potassium) }
+    var calcium by remember { mutableStateOf(initialValues.calcium) }
+    var bicarbonate by remember { mutableStateOf(initialValues.bicarbonate) }
 
     val isFormValid = bloodGlucose.isNotBlank() && 
                       sodium.isNotBlank() && 

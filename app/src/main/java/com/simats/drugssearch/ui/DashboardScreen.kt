@@ -14,14 +14,13 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Timeline
 import androidx.compose.material.icons.filled.Upload
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -56,6 +55,7 @@ private val ProfileIcon = Color(0xFFF97316)
 
 @Composable
 fun DashboardScreen(
+    userName: String = "John",
     onUploadClick: () -> Unit = {},
     onSearchClick: () -> Unit = {},
     onHistoryClick: () -> Unit = {},
@@ -95,7 +95,7 @@ fun DashboardScreen(
                     
                     // Welcome Section
                     Text(
-                        text = "Welcome back, John!",
+                        text = "Welcome back, $userName!",
                         style = MaterialTheme.typography.headlineMedium.copy(
                             fontWeight = FontWeight.Bold,
                             fontSize = 24.sp
@@ -322,7 +322,6 @@ fun DashboardTopBar() {
             .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // App Logo
         // App Logo
         Image(
             painter = painterResource(id = R.drawable.logo_drugsearch),

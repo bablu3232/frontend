@@ -56,6 +56,7 @@ data class LipidProfileValues(
 
 @Composable
 fun LipidProfileEntryScreen(
+    initialValues: LipidProfileValues = LipidProfileValues(),
     onBackClick: () -> Unit = {},
     onHomeClick: () -> Unit = {},
     onSubmitClick: (LipidProfileValues) -> Unit = {},
@@ -63,10 +64,10 @@ fun LipidProfileEntryScreen(
     onHistoryClick: () -> Unit = {},
     onProfileClick: () -> Unit = {}
 ) {
-    var totalCholesterol by remember { mutableStateOf("") }
-    var hdlCholesterol by remember { mutableStateOf("") }
-    var ldlCholesterol by remember { mutableStateOf("") }
-    var triglycerides by remember { mutableStateOf("") }
+    var totalCholesterol by remember { mutableStateOf(initialValues.totalCholesterol) }
+    var hdlCholesterol by remember { mutableStateOf(initialValues.hdlCholesterol) }
+    var ldlCholesterol by remember { mutableStateOf(initialValues.ldlCholesterol) }
+    var triglycerides by remember { mutableStateOf(initialValues.triglycerides) }
 
     val isFormValid = totalCholesterol.isNotBlank() && 
                       hdlCholesterol.isNotBlank() && 

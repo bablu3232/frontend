@@ -56,6 +56,7 @@ data class KidneyFunctionValues(
 
 @Composable
 fun KidneyFunctionEntryScreen(
+    initialValues: KidneyFunctionValues = KidneyFunctionValues(),
     onBackClick: () -> Unit = {},
     onHomeClick: () -> Unit = {},
     onSubmitClick: (KidneyFunctionValues) -> Unit = {},
@@ -63,10 +64,10 @@ fun KidneyFunctionEntryScreen(
     onHistoryClick: () -> Unit = {},
     onProfileClick: () -> Unit = {}
 ) {
-    var creatinine by remember { mutableStateOf("") }
-    var bun by remember { mutableStateOf("") }
-    var egfr by remember { mutableStateOf("") }
-    var uricAcid by remember { mutableStateOf("") }
+    var creatinine by remember { mutableStateOf(initialValues.creatinine) }
+    var bun by remember { mutableStateOf(initialValues.bun) }
+    var egfr by remember { mutableStateOf(initialValues.egfr) }
+    var uricAcid by remember { mutableStateOf(initialValues.uricAcid) }
 
     val isFormValid = creatinine.isNotBlank() && 
                       bun.isNotBlank() && 
