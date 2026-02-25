@@ -64,11 +64,16 @@ private val normalRangesWithUnits = mapOf(
     "HDL Cholesterol" to Triple(40.0 to 999.0, "mg/dL", ">40 mg/dL"),
     "LDL Cholesterol" to Triple(0.0 to 100.0, "mg/dL", "<100 mg/dL"),
     "Triglycerides" to Triple(0.0 to 150.0, "mg/dL", "<150 mg/dL"),
+    "VLDL Cholesterol" to Triple(5.0 to 40.0, "mg/dL", "5-40 mg/dL"),
+    "T-Chol/HDL Ratio" to Triple(3.3 to 5.0, "", "3.3-5.0"),
+    "LDL/HDL Ratio" to Triple(1.0 to 3.6, "", "1.0-3.6"),
     // Kidney Function
     "Creatinine" to Triple(0.6 to 1.3, "mg/dL", "0.6-1.3 mg/dL"),
     "BUN" to Triple(7.0 to 20.0, "mg/dL", "7-20 mg/dL"),
     "eGFR" to Triple(90.0 to 999.0, "mL/min/1.73m²", "≥90 mL/min"),
-    "Uric Acid" to Triple(2.4 to 7.0, "mg/dL", "2.4-7.0 mg/dL")
+    "Uric Acid" to Triple(2.4 to 7.0, "mg/dL", "2.4-7.0 mg/dL"),
+    // Aliases
+    "Glucose" to Triple(70.0 to 99.0, "mg/dL", "70-99 mg/dL")
 )
 
 private fun isValueNormal(name: String, value: String): Boolean {

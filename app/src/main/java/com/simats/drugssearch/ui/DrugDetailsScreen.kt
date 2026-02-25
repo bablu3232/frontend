@@ -35,11 +35,13 @@ private val IconBlueBg = Color(0xFFE3F2FD)
 // Drug Details data class
 data class DrugDetails(
     val name: String,
-    val condition: String,
-    val commonUses: String,
+    val genericName: String,
+    val drugCategory: String,
+    val indication: String,
     val typicalDosage: String,
     val sideEffects: String,
-    val precautions: String
+    val safetyWarnings: String,
+    val storageDetails: String
 )
 
 @Composable
@@ -96,64 +98,95 @@ fun DrugDetailsScreen(
                     color = TextDarkColor
                 )
 
+                // Generic Name
+                if (drug.genericName.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Generic: ${drug.genericName}",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontSize = 14.sp
+                        ),
+                        color = TextGrayColor
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Condition Badge
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = BadgeBlueBg
-                ) {
-                    Text(
-                        text = drug.condition.uppercase(),
-                        style = MaterialTheme.typography.labelMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 12.sp
-                        ),
-                        color = BadgeBlueText,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                    )
+                // Category Badge
+                if (drug.drugCategory.isNotEmpty()) {
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = BadgeBlueBg
+                    ) {
+                        Text(
+                            text = drug.drugCategory.uppercase(),
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.sp
+                            ),
+                            color = BadgeBlueText,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Information Cards
-                InfoCard(
-                    icon = Icons.Default.Info,
-                    iconBg = IconBlueBg,
-                    iconTint = PrimaryBlue,
-                    title = "Common Uses",
-                    content = drug.commonUses
-                )
+                // Indication Card
+                if (drug.indication.isNotEmpty()) {
+                    InfoCard(
+                        icon = Icons.Default.Info,
+                        iconBg = IconBlueBg,
+                        iconTint = PrimaryBlue,
+                        title = "Indication",
+                        content = drug.indication
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                // Dosage Card
+                if (drug.typicalDosage.isNotEmpty()) {
+                    InfoCard(
+                        icon = Icons.Default.Medication,
+                        iconBg = IconBlueBg,
+                        iconTint = PrimaryBlue,
+                        title = "Common Dosage",
+                        content = drug.typicalDosage
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
 
-                InfoCard(
-                    icon = Icons.Default.Medication,
-                    iconBg = IconBlueBg,
-                    iconTint = PrimaryBlue,
-                    title = "Typical Dosage",
-                    content = drug.typicalDosage
-                )
+                // Side Effects Card
+                if (drug.sideEffects.isNotEmpty()) {
+                    WarningInfoCard(
+                        icon = Icons.Default.Warning,
+                        title = "Side Effects",
+                        content = drug.sideEffects
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                // Safety Warnings Card
+                if (drug.safetyWarnings.isNotEmpty()) {
+                    WarningInfoCard(
+                        icon = Icons.Default.Shield,
+                        title = "Safety Warnings",
+                        content = drug.safetyWarnings
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
 
-                WarningInfoCard(
-                    icon = Icons.Default.Warning,
-                    title = "Side Effects",
-                    content = drug.sideEffects
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                InfoCard(
-                    icon = Icons.Default.Shield,
-                    iconBg = IconBlueBg,
-                    iconTint = PrimaryBlue,
-                    title = "Precautions",
-                    content = drug.precautions
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
+                // Storage Details Card
+                if (drug.storageDetails.isNotEmpty()) {
+                    InfoCard(
+                        icon = Icons.Default.Inventory2,
+                        iconBg = IconBlueBg,
+                        iconTint = PrimaryBlue,
+                        title = "Storage Details",
+                        content = drug.storageDetails
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
 
                 // Medical Disclaimer
                 MedicalDisclaimerCard()
@@ -315,12 +348,15 @@ fun DrugDetailsScreenPreview() {
         DrugDetailsScreen(
             drug = DrugDetails(
                 name = "Metformin",
-                condition = "Diabetes",
-                commonUses = "Used to treat type 2 diabetes. Helps control blood sugar levels and improves insulin sensitivity. May also be used for PCOS treatment.",
-                typicalDosage = "Adults: 500mg-850mg twice daily with meals. Maximum dose: 2000-2550mg per day. Start with low dose and increase gradually.",
-                sideEffects = "Common: Nausea, diarrhea, upset stomach. Rare but serious: Lactic acidosis, vitamin B12 deficiency. Contact doctor if severe symptoms occur.",
-                precautions = "Do not use if you have kidney disease, liver problems, or heart failure. Avoid alcohol. Inform doctor about all medications. Monitor blood sugar regularly."
+                genericName = "Metformin Hydrochloride",
+                drugCategory = "Diabetes",
+                indication = "Used to treat type 2 diabetes. Helps control blood sugar levels and improves insulin sensitivity. May also be used for PCOS treatment.",
+                typicalDosage = "Adults: 500mg-850mg twice daily with meals. Maximum dose: 2000-2550mg per day.",
+                sideEffects = "Common: Nausea, diarrhea, upset stomach. Rare but serious: Lactic acidosis, vitamin B12 deficiency.",
+                safetyWarnings = "Do not use if you have kidney disease, liver problems, or heart failure. Avoid alcohol. Monitor blood sugar regularly.",
+                storageDetails = "Store at room temperature (20-25°C). Keep away from moisture and heat."
             )
         )
     }
 }
+

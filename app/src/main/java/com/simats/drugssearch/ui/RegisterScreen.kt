@@ -55,18 +55,26 @@ private val ErrorColor = Color(0xFFEF4444)
 // Validation functions
 private fun isValidEmail(email: String): Boolean {
     val emailPattern = android.util.Patterns.EMAIL_ADDRESS
-    return email.isNotEmpty() && emailPattern.matcher(email).matches()
+    // Strict validation: Must be a valid email format AND contain "gmail" (assuming @gmail.com)
+    return email.isNotEmpty() && emailPattern.matcher(email).matches() && email.lowercase().contains("gmail")
+}
+
+private fun isValidName(name: String): Boolean {
+    // Name must allow only letters and spaces
+    val namePattern = "^[a-zA-Z\\s]+$".toRegex()
+    return name.isNotEmpty() && namePattern.matches(name)
 }
 
 private fun isValidPhone(phone: String): Boolean {
-    // Phone is optional, but if provided should have at least 10 digits
-    if (phone.isEmpty()) return true
-    val digitsOnly = phone.filter { it.isDigit() }
-    return digitsOnly.length >= 10
+    // Phone must be exactly 10 digits
+    val phonePattern = "^[0-9]{10}$".toRegex()
+    return phone.isNotEmpty() && phonePattern.matches(phone)
 }
 
 private fun isValidPassword(password: String): Boolean {
-    return password.length >= 6
+    // Password: Min 8 chars, only letters and numbers involved
+    val passwordPattern = "^[a-zA-Z0-9]{8,}$".toRegex()
+    return password.isNotEmpty() && passwordPattern.matches(password)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -577,23 +585,26 @@ fun RegisterScreen(
                             if (fullName.trim().isEmpty()) {
                                 fullNameError = "Please enter your full name"
                                 hasError = true
+                            } else if (!isValidName(fullName.trim())) {
+                                fullNameError = "Name can only contain letters and spaces"
+                                hasError = true
                             }
                             
                             // Validate email
                             if (!isValidEmail(email)) {
-                                emailError = "Please enter a valid email address"
+                                emailError = "Please enter a valid Gmail address (e.g., user@gmail.com)"
                                 hasError = true
                             }
                             
-                            // Validate phone (optional but must be valid if provided)
+                            // Validate phone
                             if (!isValidPhone(phoneNumber)) {
-                                phoneError = "Please enter a valid phone number (at least 10 digits)"
+                                phoneError = "Please enter a valid 10-digit phone number"
                                 hasError = true
                             }
                             
                             // Validate password
                             if (!isValidPassword(password)) {
-                                passwordError = "Password must be at least 6 characters"
+                                passwordError = "Password must be at least 8 characters (letters and numbers only)"
                                 hasError = true
                             }
                             
@@ -608,7 +619,7 @@ fun RegisterScreen(
                             
                             // Validate terms agreement
                             if (!agreeToTerms) {
-                                termsError = "You must agree to the Terms of Service and Privacy Policy"
+                                termsError = "You must agree to the Terms of Service"
                                 hasError = true
                             }
                             

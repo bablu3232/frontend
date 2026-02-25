@@ -60,7 +60,7 @@ private fun isValidEmail(email: String): Boolean {
 @Composable
 fun LoginScreen(
     onBackClick: () -> Unit = {},
-    onLoginSuccess: (userId: Int, fullName: String, email: String) -> Unit = { _, _, _ -> },
+    onLoginSuccess: (userId: Int, fullName: String, email: String, phone: String, dob: String, gender: String) -> Unit = { _, _, _, _, _, _ -> },
     onForgotPasswordClick: () -> Unit = {},
     onRegisterClick: () -> Unit = {},
     onPrivacyPolicyClick: () -> Unit = {},
@@ -384,7 +384,7 @@ fun LoginScreen(
                                             val body = response.body()!!
                                             // Assume successful login if we get a valid response
                                             // You might want to store the token/user_id here
-                                            onLoginSuccess(body.userId ?: 0, body.fullName ?: "", body.email ?: email)
+                                            onLoginSuccess(body.userId ?: 0, body.fullName ?: "", body.email ?: email, body.phone ?: "", body.dob ?: "", body.gender ?: "")
                                         } else {
                                             val errorBody = response.errorBody()?.string()
                                             // simple parsing of error message from JSON manually or via simple string check if gson not set up for error

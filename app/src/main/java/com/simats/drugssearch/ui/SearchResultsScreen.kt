@@ -160,7 +160,7 @@ private fun DrugResultCard(
             // Drug Info
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = drug.name,
+                    text = drug.drugName,
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp
@@ -168,30 +168,11 @@ private fun DrugResultCard(
                     color = TextDarkColor
                 )
 
-                Spacer(modifier = Modifier.height(6.dp))
-
-                // Condition Badge and Form Type
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Surface(
-                        shape = RoundedCornerShape(6.dp),
-                        color = BadgeBlueBg
-                    ) {
-                        Text(
-                            text = drug.condition.uppercase(),
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 10.sp
-                            ),
-                            color = BadgeBlueText,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                        )
-                    }
-
+                // Generic Name
+                if (!drug.genericName.isNullOrEmpty()) {
+                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = "Tablet", // Hardcoded for now as it's not in API
+                        text = drug.genericName,
                         style = MaterialTheme.typography.bodySmall.copy(
                             fontSize = 12.sp
                         ),
@@ -201,14 +182,40 @@ private fun DrugResultCard(
 
                 Spacer(modifier = Modifier.height(6.dp))
 
-                // Dosages
-                Text(
-                    text = "Available: ${drug.dosages.joinToString(", ")}",
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        fontSize = 12.sp
-                    ),
-                    color = TextGrayColor
-                )
+                // Category Badge
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    if (!drug.drugCategory.isNullOrEmpty()) {
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = BadgeBlueBg
+                        ) {
+                            Text(
+                                text = drug.drugCategory.uppercase(),
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 10.sp
+                                ),
+                                color = BadgeBlueText,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
+                }
+
+                // Dosage
+                if (!drug.commonDosage.isNullOrEmpty()) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "Dosage: ${drug.commonDosage}",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            fontSize = 12.sp
+                        ),
+                        color = TextGrayColor
+                    )
+                }
             }
 
             // Arrow Icon
@@ -230,15 +237,18 @@ fun SearchResultsScreenPreview() {
             searchQuery = "metformin",
             drugs = listOf(
                 com.simats.drugssearch.network.Drug(
-                    name = "Metformin",
-                    condition = "Diabetes",
-                    dosages = listOf("500mg", "850mg", "1000mg"),
+                    drugName = "Metformin",
+                    genericName = "Metformin Hydrochloride",
+                    drugCategory = "Diabetes",
+                    indication = "Type 2 Diabetes",
                     description = "Description",
+                    commonDosage = "500mg, 850mg, 1000mg",
                     sideEffects = "Side Effects",
-                    warnings = "Warnings",
-                    storage = "Storage"
+                    safetyWarnings = "Warnings",
+                    storageDetails = "Store at room temperature"
                 )
             )
         )
     }
 }
+

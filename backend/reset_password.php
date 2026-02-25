@@ -1,5 +1,7 @@
 <?php
 header("Content-Type: application/json");
+error_reporting(0);
+ini_set('display_errors', 0);
 include "db.php";
 
 $data = json_decode(file_get_contents("php://input"), true);

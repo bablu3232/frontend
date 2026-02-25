@@ -1,0 +1,12 @@
+{
+    "user_id": 1,
+    "category": "Kidney Function",
+    "parameters": [
+        {
+            "name": "Creatinine",
+            "value": "3.0",
+            "unit": "mg/dL",
+            "is_normal": false
+        }
+    ]
+}

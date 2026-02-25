@@ -6,6 +6,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.CircleShape
 import com.simats.drugssearch.R
+import com.simats.drugssearch.ui.theme.*
 
 import android.net.Uri
 import android.provider.OpenableColumns
@@ -74,7 +75,7 @@ fun FileSelectedScreen(
     onBackClick: () -> Unit = {},
     onHomeClick: () -> Unit = {},
     onChooseDifferentFileClick: () -> Unit = {},
-    onUploadSuccess: (Map<String, String>, String) -> Unit = { _, _ -> },
+    onUploadSuccess: (Map<String, String>, String, List<com.simats.drugssearch.ui.DrugRecommendation>, com.simats.drugssearch.network.PatientDetails?, Int?) -> Unit = { _, _, _, _, _ -> },
     onSearchClick: () -> Unit = {},
     onHistoryClick: () -> Unit = {},
     onProfileClick: () -> Unit = {}
@@ -389,9 +390,12 @@ fun FileSelectedScreen(
                                             if (response.isSuccessful && response.body()?.status == "success") {
                                                 val uploadResponse = response.body()!!
                                                 val extractedTextJson = uploadResponse.extractedText ?: ""
+                                                val reportId = uploadResponse.reportId // Capture reportId
 
                                                 var values = emptyMap<String, String>()
                                                 var category = "General"
+                                                var recommendations = mutableListOf<com.simats.drugssearch.ui.DrugRecommendation>()
+                                                var patientDetails: com.simats.drugssearch.network.PatientDetails? = null
 
                                                 if (extractedTextJson.isNotEmpty()) {
                                                     try {
@@ -399,11 +403,36 @@ fun FileSelectedScreen(
                                                         val ocrResponse = gson.fromJson(extractedTextJson, com.simats.drugssearch.network.OcrResponse::class.java)
                                                         
                                                         category = ocrResponse.reportCategory ?: "General"
+                                                        patientDetails = ocrResponse.patientDetails
                                                         
                                                         // Extract values from parameters map
                                                         values = ocrResponse.parameters?.mapValues { entry -> 
                                                             entry.value.value.toString() 
                                                         } ?: emptyMap()
+
+                                                        // Extract recommendations
+                                                        ocrResponse.parameters?.forEach { (name, detail) ->
+                                                            if (detail.recommendation != null) {
+                                                                val rec = detail.recommendation
+                                                                val drugsList = rec.drugs?.split(",")?.map { it.trim() } ?: emptyList()
+                                                                
+                                                                // Assign a color based on status for now (red for high/low)
+                                                                val catColor = if (detail.status == "Normal") com.simats.drugssearch.ui.theme.GreenColor else com.simats.drugssearch.ui.theme.RedColor
+                                                                val catBg = if (detail.status == "Normal") com.simats.drugssearch.ui.theme.GreenBg else com.simats.drugssearch.ui.theme.RedBg
+
+                                                                recommendations.add(
+                                                                    com.simats.drugssearch.ui.DrugRecommendation(
+                                                                        parameterName = name, // Pass the parameter name (map key)
+                                                                        name = rec.category ?: "General Recommendation",
+                                                                        condition = detail.condition ?: "Abnormal Value",
+                                                                        category = detail.category ?: "General",
+                                                                        commonDrugs = drugsList,
+                                                                        categoryColor = catColor,
+                                                                        categoryBg = catBg
+                                                                    )
+                                                                )
+                                                            }
+                                                        }
                                                         
                                                     } catch (e: Exception) {
                                                         e.printStackTrace()
@@ -412,7 +441,7 @@ fun FileSelectedScreen(
                                                 }
                                                 
                                                 Toast.makeText(context, "Analysis Complete!", Toast.LENGTH_SHORT).show()
-                                                onUploadSuccess(values, category)
+                                                onUploadSuccess(values, category, recommendations, patientDetails, reportId)
                                             } else {
                                                 Toast.makeText(context, "Upload Failed: ${response.message()}", Toast.LENGTH_SHORT).show()
                                             }

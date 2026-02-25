@@ -13,6 +13,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -23,61 +24,67 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Upload
-import androidx.compose.material.icons.outlined.Bloodtype
-import androidx.compose.material.icons.outlined.FavoriteBorder
-import androidx.compose.material.icons.outlined.Science
-import androidx.compose.material.icons.outlined.WaterDrop
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.simats.drugssearch.ui.theme.DrugsSearchTheme
 
-// Manual Entry Screen Colors
+// Liver Function Entry Screen Colors
 private val PrimaryBlue = Color(0xFF3B82F6)
-private val LightBlue = Color(0xFFDDEAFF)
 private val BackgroundColor = Color(0xFFF8FAFC)
 private val TextDarkColor = Color(0xFF1E293B)
 private val TextGrayColor = Color(0xFF64748B)
 private val CardBorderColor = Color(0xFFE2E8F0)
 private val DisclaimerBackground = Color(0xFFF1F5F9)
-private val TipBackground = Color(0xFFFFFBEB)
-private val TipBorder = Color(0xFFFDE68A)
+private val WarningBackground = Color(0xFFFFFBEB)
+private val WarningBorder = Color(0xFFFDE68A)
+private val WarningText = Color(0xFFB45309)
 
-// Category Icon Colors
-private val BloodCountBg = Color(0xFFFFE4E6)
-private val BloodCountIcon = Color(0xFFE11D48)
-private val MetabolicBg = Color(0xFFE0E7FF)
-private val MetabolicIcon = Color(0xFF6366F1)
-private val LipidBg = Color(0xFFFCE7F3)
-private val LipidIcon = Color(0xFFEC4899)
-private val KidneyBg = Color(0xFFDCFCE7)
-private val KidneyIcon = Color(0xFF22C55E)
-private val LiverBg = Color(0xFFFEF3C7)
-private val LiverIcon = Color(0xFFF59E0B)
-private val ThyroidBg = Color(0xFFCFFAFE)
-private val ThyroidIcon = Color(0xFF06B6D4)
+data class LiverFunctionValues(
+    val sgot: String = "",
+    val sgpt: String = "",
+    val alp: String = "",
+    val totalBilirubin: String = "",
+    val directBilirubin: String = "",
+    val albumin: String = "",
+    val totalProtein: String = "",
+    val ggt: String = ""
+)
 
 @Composable
-fun ManualEntryScreen(
+fun LiverFunctionEntryScreen(
+    initialValues: LiverFunctionValues = LiverFunctionValues(),
     onBackClick: () -> Unit = {},
     onHomeClick: () -> Unit = {},
-    onCategorySelected: (String) -> Unit = {},
+    onSubmitClick: (LiverFunctionValues) -> Unit = {},
     onSearchClick: () -> Unit = {},
     onHistoryClick: () -> Unit = {},
     onProfileClick: () -> Unit = {}
 ) {
-    var selectedCategory by remember { mutableStateOf<String?>(null) }
+    var sgot by remember { mutableStateOf(initialValues.sgot) }
+    var sgpt by remember { mutableStateOf(initialValues.sgpt) }
+    var alp by remember { mutableStateOf(initialValues.alp) }
+    var totalBilirubin by remember { mutableStateOf(initialValues.totalBilirubin) }
+    var directBilirubin by remember { mutableStateOf(initialValues.directBilirubin) }
+    var albumin by remember { mutableStateOf(initialValues.albumin) }
+    var totalProtein by remember { mutableStateOf(initialValues.totalProtein) }
+    var ggt by remember { mutableStateOf(initialValues.ggt) }
+
+    val isFormValid = sgot.isNotBlank() && 
+                      sgpt.isNotBlank() && 
+                      alp.isNotBlank() && 
+                      totalBilirubin.isNotBlank()
 
     Scaffold(
         bottomBar = {
-            ManualEntryBottomNav(
+            LiverFunctionBottomNav(
                 onHomeClick = onHomeClick,
                 onUploadClick = { },
                 onSearchClick = onSearchClick,
@@ -94,7 +101,7 @@ fun ManualEntryScreen(
 
         ) {
             // Top App Bar
-            ManualEntryTopBar(
+            LiverFunctionTopBar(
                 onBackClick = onBackClick,
                 onHomeClick = onHomeClick
             )
@@ -110,156 +117,208 @@ fun ManualEntryScreen(
 
                 // Title
                 Text(
-                    text = "Manual Entry",
+                    text = "Liver Function",
                     style = MaterialTheme.typography.headlineMedium.copy(
                         fontWeight = FontWeight.Bold,
                         fontSize = 24.sp
                     ),
-                    color = TextDarkColor,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
+                    color = TextDarkColor
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = "Select a test category to enter values",
+                    text = "Enter your liver function test values",
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontSize = 15.sp
                     ),
-                    color = TextGrayColor,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
+                    color = TextGrayColor
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Category Cards
-                CategoryCard(
-                    title = "Blood Count",
-                    subtitle = "Hemoglobin, RBC, WBC, Platelets",
-                    iconBgColor = BloodCountBg,
-                    iconColor = BloodCountIcon,
-                    isSelected = selectedCategory == "Blood Count",
-                    onClick = { selectedCategory = "Blood Count" }
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                CategoryCard(
-                    title = "Metabolic Panel",
-                    subtitle = "Glucose, Sodium, Potassium, Calcium",
-                    iconBgColor = MetabolicBg,
-                    iconColor = MetabolicIcon,
-                    isSelected = selectedCategory == "Metabolic Panel",
-                    onClick = { selectedCategory = "Metabolic Panel" }
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                CategoryCard(
-                    title = "Lipid Profile",
-                    subtitle = "Cholesterol, HDL, LDL, Triglycerides",
-                    iconBgColor = LipidBg,
-                    iconColor = LipidIcon,
-                    isSelected = selectedCategory == "Lipid Profile",
-                    onClick = { selectedCategory = "Lipid Profile" }
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                CategoryCard(
-                    title = "Kidney Function",
-                    subtitle = "Creatinine, BUN, eGFR",
-                    iconBgColor = KidneyBg,
-                    iconColor = KidneyIcon,
-                    isSelected = selectedCategory == "Kidney Function",
-                    onClick = { selectedCategory = "Kidney Function" }
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                CategoryCard(
-                    title = "Liver Function",
-                    subtitle = "SGOT, SGPT, ALP, Bilirubin",
-                    iconBgColor = LiverBg,
-                    iconColor = LiverIcon,
-                    isSelected = selectedCategory == "Liver Function",
-                    onClick = { selectedCategory = "Liver Function" }
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                CategoryCard(
-                    title = "Thyroid Panel",
-                    subtitle = "TSH, Free T4, Free T3",
-                    iconBgColor = ThyroidBg,
-                    iconColor = ThyroidIcon,
-                    isSelected = selectedCategory == "Thyroid Panel",
-                    onClick = { selectedCategory = "Thyroid Panel" }
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // Tip Section
+                // Form Card
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(1.dp, TipBorder, RoundedCornerShape(12.dp)),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = TipBackground),
+                        .border(1.dp, CardBorderColor, RoundedCornerShape(16.dp)),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
                     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
-                    Row(
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.Top
+                            .padding(20.dp)
                     ) {
-                        Text(
-                            text = "💡",
-                            fontSize = 16.sp
+                        // SGOT / AST
+                        LiverFunctionTextField(
+                            label = "SGOT / AST (U/L) *",
+                            value = sgot,
+                            onValueChange = { sgot = it },
+                            placeholder = "e.g., 25",
+                            helperText = "Normal: 10–40 U/L"
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Tip: Have your medical report ready. Enter values exactly as shown on your report for accurate analysis.",
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                fontSize = 13.sp,
-                                lineHeight = 20.sp
-                            ),
-                            color = TextDarkColor
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // SGPT / ALT
+                        LiverFunctionTextField(
+                            label = "SGPT / ALT (U/L) *",
+                            value = sgpt,
+                            onValueChange = { sgpt = it },
+                            placeholder = "e.g., 30",
+                            helperText = "Normal: 7–56 U/L"
                         )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // ALP
+                        LiverFunctionTextField(
+                            label = "ALP (U/L) *",
+                            value = alp,
+                            onValueChange = { alp = it },
+                            placeholder = "e.g., 80",
+                            helperText = "Normal: 44–147 U/L"
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // Total Bilirubin
+                        LiverFunctionTextField(
+                            label = "Total Bilirubin (mg/dL) *",
+                            value = totalBilirubin,
+                            onValueChange = { totalBilirubin = it },
+                            placeholder = "e.g., 0.8",
+                            helperText = "Normal: 0.1–1.2 mg/dL"
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // Direct Bilirubin (Optional)
+                        LiverFunctionTextField(
+                            label = "Direct Bilirubin (mg/dL)",
+                            value = directBilirubin,
+                            onValueChange = { directBilirubin = it },
+                            placeholder = "e.g., 0.2",
+                            helperText = "Normal: 0.0–0.3 mg/dL",
+                            isOptional = true
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // Albumin (Optional)
+                        LiverFunctionTextField(
+                            label = "Albumin (g/dL)",
+                            value = albumin,
+                            onValueChange = { albumin = it },
+                            placeholder = "e.g., 4.2",
+                            helperText = "Normal: 3.5–5.5 g/dL",
+                            isOptional = true
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // Total Protein (Optional)
+                        LiverFunctionTextField(
+                            label = "Total Protein (g/dL)",
+                            value = totalProtein,
+                            onValueChange = { totalProtein = it },
+                            placeholder = "e.g., 7.0",
+                            helperText = "Normal: 6.0–8.3 g/dL",
+                            isOptional = true
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // GGT (Optional)
+                        LiverFunctionTextField(
+                            label = "GGT (U/L)",
+                            value = ggt,
+                            onValueChange = { ggt = it },
+                            placeholder = "e.g., 25",
+                            helperText = "Normal: 0–45 U/L",
+                            isOptional = true
+                        )
+
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        // Required fields note
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .border(1.dp, WarningBorder, RoundedCornerShape(8.dp)),
+                            shape = RoundedCornerShape(8.dp),
+                            colors = CardDefaults.cardColors(containerColor = WarningBackground),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                        ) {
+                            Text(
+                                text = "* Required fields must be filled to submit",
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    fontSize = 12.sp
+                                ),
+                                color = WarningText,
+                                modifier = Modifier.padding(12.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        // Action Buttons
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            OutlinedButton(
+                                onClick = onBackClick,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(48.dp),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Text(
+                                    text = "Back",
+                                    fontWeight = FontWeight.Medium,
+                                    color = TextDarkColor
+                                )
+                            }
+
+                            Button(
+                                onClick = {
+                                    onSubmitClick(
+                                        LiverFunctionValues(
+                                            sgot = sgot,
+                                            sgpt = sgpt,
+                                            alp = alp,
+                                            totalBilirubin = totalBilirubin,
+                                            directBilirubin = directBilirubin,
+                                            albumin = albumin,
+                                            totalProtein = totalProtein,
+                                            ggt = ggt
+                                        )
+                                    )
+                                },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(48.dp),
+                                enabled = isFormValid,
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = PrimaryBlue,
+                                    disabledContainerColor = CardBorderColor
+                                )
+                            ) {
+                                Text(
+                                    text = "Submit",
+                                    fontWeight = FontWeight.Medium,
+                                    color = if (isFormValid) Color.White else TextGrayColor
+                                )
+                            }
+                        }
                     }
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
-
-                // Continue Button
-                Button(
-                    onClick = {
-                        selectedCategory?.let { onCategorySelected(it) }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp),
-                    enabled = selectedCategory != null,
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = PrimaryBlue,
-                        disabledContainerColor = CardBorderColor
-                    )
-                ) {
-                    Text(
-                        text = if (selectedCategory != null) "Continue to Entry Form" else "Select a Category",
-                        style = MaterialTheme.typography.bodyLarge.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 16.sp
-                        ),
-                        color = if (selectedCategory != null) Color.White else TextGrayColor
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(32.dp))
 
                 // Medical Disclaimer
                 Card(
@@ -292,7 +351,7 @@ fun ManualEntryScreen(
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "This platform is designed for educational and informational purposes only. It is not a substitute for professional medical advice, diagnosis, or treatment. Always seek the advice of your physician or other qualified health provider with any questions you may have regarding a medical condition.",
+                                text = "This platform is designed for educational and informational purposes only. It is not a substitute for professional medical advice, diagnosis, or treatment.",
                                 style = MaterialTheme.typography.bodySmall.copy(
                                     fontSize = 12.sp,
                                     lineHeight = 18.sp
@@ -350,17 +409,6 @@ fun ManualEntryScreen(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Copyright
-                Text(
-                    text = "© 2026 DrugSearch. All rights reserved.",
-                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
-                    color = TextGrayColor,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
                 Spacer(modifier = Modifier.height(24.dp))
             }
         }
@@ -368,79 +416,75 @@ fun ManualEntryScreen(
 }
 
 @Composable
-private fun CategoryCard(
-    title: String,
-    subtitle: String,
-    iconBgColor: Color,
-    iconColor: Color,
-    isSelected: Boolean,
-    onClick: () -> Unit
+private fun LiverFunctionTextField(
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    helperText: String,
+    isOptional: Boolean = false
 ) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .border(
-                width = if (isSelected) 2.dp else 1.dp,
-                color = if (isSelected) PrimaryBlue else CardBorderColor,
-                shape = RoundedCornerShape(16.dp)
-            ),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) LightBlue.copy(alpha = 0.3f) else Color.White
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .background(iconBgColor, RoundedCornerShape(12.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = when (title) {
-                        "Blood Count" -> Icons.Outlined.Bloodtype
-                        "Metabolic Panel" -> Icons.Outlined.Science
-                        "Lipid Profile" -> Icons.Outlined.FavoriteBorder
-                        else -> Icons.Outlined.WaterDrop
-                    },
-                    contentDescription = null,
-                    tint = iconColor,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
+    Column {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 14.sp
+                ),
+                color = TextDarkColor
+            )
+            if (isOptional) {
+                Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
-                    ),
-                    color = TextDarkColor
-                )
-                Text(
-                    text = subtitle,
+                    text = "Optional",
                     style = MaterialTheme.typography.bodySmall.copy(
-                        fontSize = 13.sp
+                        fontSize = 12.sp
                     ),
                     color = TextGrayColor
                 )
             }
         }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            placeholder = {
+                Text(
+                    text = placeholder,
+                    color = TextGrayColor.copy(alpha = 0.6f)
+                )
+            },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedTextColor = Color.Black,
+                unfocusedTextColor = Color.Black,
+                focusedBorderColor = PrimaryBlue,
+                unfocusedBorderColor = CardBorderColor,
+                focusedContainerColor = Color.White,
+                unfocusedContainerColor = Color.White
+            ),
+            singleLine = true
+        )
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Text(
+            text = helperText,
+            style = MaterialTheme.typography.bodySmall.copy(
+                fontSize = 11.sp
+            ),
+            color = TextGrayColor
+        )
     }
 }
 
 @Composable
-private fun ManualEntryTopBar(
+private fun LiverFunctionTopBar(
     onBackClick: () -> Unit,
     onHomeClick: () -> Unit
 ) {
@@ -502,7 +546,7 @@ private fun ManualEntryTopBar(
 }
 
 @Composable
-private fun ManualEntryBottomNav(
+private fun LiverFunctionBottomNav(
     onHomeClick: () -> Unit,
     onUploadClick: () -> Unit,
     onSearchClick: () -> Unit,
@@ -583,8 +627,8 @@ private fun ManualEntryBottomNav(
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
-fun ManualEntryScreenPreview() {
+fun LiverFunctionEntryScreenPreview() {
     DrugsSearchTheme {
-        ManualEntryScreen()
+        LiverFunctionEntryScreen()
     }
 }

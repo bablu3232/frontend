@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Upload
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -54,7 +55,7 @@ private val GreenBorder = Color(0xFF86EFAC)
 
 @Composable
 fun ReviewValuesScreen(
-    userId: Int, // Added userId
+    userId: Int,
     categoryName: String = "Blood Count",
     values: Map<String, String> = mapOf(
         "Hemoglobin" to "323",
@@ -63,11 +64,11 @@ fun ReviewValuesScreen(
         "Platelets" to "242",
         "Hematocrit" to "241.1"
     ),
+    initialPatientDetails: com.simats.drugssearch.network.PatientDetails? = null,
     onBackClick: () -> Unit = {},
     onHomeClick: () -> Unit = {},
-    onEditClick: () -> Unit = {},
-    onBackToEditClick: () -> Unit = {},
-    onSubmitForAnalysisClick: () -> Unit = {},
+    onSaveClick: (Map<String, String>, com.simats.drugssearch.network.PatientDetails?, String) -> Unit = { _, _, _ -> },
+    onSubmitForAnalysisClick: (Map<String, String>, com.simats.drugssearch.network.PatientDetails?, String) -> Unit = { _, _, _ -> },
     onSearchClick: () -> Unit = {},
     onHistoryClick: () -> Unit = {},
     onProfileClick: () -> Unit = {}
@@ -75,6 +76,23 @@ fun ReviewValuesScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var isLoading by remember { mutableStateOf(false) }
+    
+    // Inline Edit State
+    var isEditing by remember { mutableStateOf(false) }
+    // We use a mutableStateMap to track edits locally
+    val editedValues = remember { mutableStateMapOf<String, String>() }
+    
+    // Patient Details State
+    var patientName by remember { mutableStateOf(initialPatientDetails?.name ?: "") }
+    var patientAge by remember { mutableStateOf(initialPatientDetails?.age ?: "") }
+    var patientGender by remember { mutableStateOf(initialPatientDetails?.gender ?: "") }
+    var remarks by remember { mutableStateOf("") }
+
+    // Initialize/Reset editedValues when values or isEditing changes
+    LaunchedEffect(values) {
+        editedValues.clear()
+        editedValues.putAll(values)
+    }
 
     Scaffold(
         bottomBar = {
@@ -88,7 +106,7 @@ fun ReviewValuesScreen(
         },
         containerColor = BackgroundColor
     ) { paddingValues ->
-        Box(modifier = Modifier.fillMaxSize()) { // Wrap content in Box for loading overlay
+        Box(modifier = Modifier.fillMaxSize()) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -123,12 +141,99 @@ fun ReviewValuesScreen(
                     Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
-                        text = "Confirm your test results before submission",
+                        text = "Confirm your test results and patient details before submission",
                         style = MaterialTheme.typography.bodyMedium.copy(
                             fontSize = 15.sp
                         ),
                         color = TextGrayColor
                     )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+                    
+                    // Patient Details Section (Editable)
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .border(1.dp, CardBorderColor, RoundedCornerShape(16.dp)),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                text = "Patient Details",
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                color = TextDarkColor
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            
+                            OutlinedTextField(
+                                value = patientName,
+                                onValueChange = { patientName = it },
+                                label = { Text("Patient Name") },
+                                modifier = Modifier.fillMaxWidth(),
+                                singleLine = true,
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedTextColor = TextDarkColor,
+                                    unfocusedTextColor = TextDarkColor,
+                                    focusedContainerColor = Color.White,
+                                    unfocusedContainerColor = Color.White,
+                                    focusedLabelColor = PrimaryBlue,
+                                    unfocusedLabelColor = TextGrayColor
+                                )
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                             Row(modifier = Modifier.fillMaxWidth()) {
+                                OutlinedTextField(
+                                    value = patientAge,
+                                    onValueChange = { patientAge = it },
+                                    label = { Text("Age") },
+                                    modifier = Modifier.weight(1f),
+                                    singleLine = true,
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedTextColor = TextDarkColor,
+                                        unfocusedTextColor = TextDarkColor,
+                                         focusedContainerColor = Color.White,
+                                        unfocusedContainerColor = Color.White,
+                                        focusedLabelColor = PrimaryBlue,
+                                        unfocusedLabelColor = TextGrayColor
+                                    )
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                OutlinedTextField(
+                                    value = patientGender,
+                                    onValueChange = { patientGender = it },
+                                    label = { Text("Gender") },
+                                    modifier = Modifier.weight(1f),
+                                    singleLine = true,
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedTextColor = TextDarkColor,
+                                        unfocusedTextColor = TextDarkColor,
+                                         focusedContainerColor = Color.White,
+                                        unfocusedContainerColor = Color.White,
+                                        focusedLabelColor = PrimaryBlue,
+                                        unfocusedLabelColor = TextGrayColor
+                                    )
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            OutlinedTextField(
+                                value = remarks,
+                                onValueChange = { remarks = it },
+                                label = { Text("Remarks (Optional)") },
+                                modifier = Modifier.fillMaxWidth(),
+                                minLines = 2,
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedTextColor = TextDarkColor,
+                                    unfocusedTextColor = TextDarkColor,
+                                     focusedContainerColor = Color.White,
+                                    unfocusedContainerColor = Color.White,
+                                    focusedLabelColor = PrimaryBlue,
+                                    unfocusedLabelColor = TextGrayColor
+                                )
+                            )
+                        }
+                    }
 
                     Spacer(modifier = Modifier.height(24.dp))
 
@@ -146,7 +251,7 @@ fun ReviewValuesScreen(
                                 .fillMaxWidth()
                                 .padding(20.dp)
                         ) {
-                            // Header with Edit button
+                            // Header with Edit/Save button
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -163,22 +268,35 @@ fun ReviewValuesScreen(
 
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.clickable { onEditClick() }
+                                    modifier = Modifier.clickable {
+                                        if (isEditing) {
+                                            // Save
+                                            onSaveClick(
+                                                editedValues.toMap(),
+                                                com.simats.drugssearch.network.PatientDetails(patientName, patientAge, patientGender),
+                                                remarks
+                                            )
+                                            isEditing = false
+                                        } else {
+                                            // Enter Edit Mode
+                                            isEditing = true
+                                        }
+                                    }
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Default.Edit,
-                                        contentDescription = "Edit",
-                                        tint = PrimaryBlue,
+                                        imageVector = if (isEditing) Icons.Default.Check else Icons.Default.Edit,
+                                        contentDescription = if (isEditing) "Save" else "Edit",
+                                        tint = if (isEditing) GreenColor else PrimaryBlue,
                                         modifier = Modifier.size(16.dp)
                                     )
                                     Spacer(modifier = Modifier.width(4.dp))
                                     Text(
-                                        text = "Edit",
+                                        text = if (isEditing) "Save" else "Edit",
                                         style = MaterialTheme.typography.bodyMedium.copy(
                                             fontWeight = FontWeight.Medium,
                                             fontSize = 14.sp
                                         ),
-                                        color = PrimaryBlue
+                                        color = if (isEditing) GreenColor else PrimaryBlue
                                     )
                                 }
                             }
@@ -186,31 +304,66 @@ fun ReviewValuesScreen(
                             Spacer(modifier = Modifier.height(20.dp))
 
                             // Values List
-                            values.forEach { (label, value) ->
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 12.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text(
-                                        text = label,
-                                        style = MaterialTheme.typography.bodyMedium.copy(
-                                            fontSize = 15.sp
-                                        ),
-                                        color = TextDarkColor
-                                    )
-                                    Text(
-                                        text = value,
-                                        style = MaterialTheme.typography.bodyMedium.copy(
-                                            fontWeight = FontWeight.SemiBold,
-                                            fontSize = 15.sp
-                                        ),
-                                        color = TextDarkColor
-                                    )
-                                }
-                                if (label != values.keys.last()) {
-                                    HorizontalDivider(color = CardBorderColor)
+                            // Iterate over editedValues keys so removals are reflected immediately
+                            val keys = editedValues.keys.toList()
+                            keys.forEachIndexed { index, label ->
+                                if (isEditing) {
+                                    // Edit Mode: Show OutlinedTextField with red remove button
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        OutlinedTextField(
+                                            value = editedValues[label] ?: "",
+                                            onValueChange = { newValue ->
+                                                editedValues[label] = newValue
+                                            },
+                                            label = { Text(label) },
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .padding(vertical = 8.dp),
+                                            singleLine = true
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        IconButton(
+                                            onClick = { editedValues.remove(label) },
+                                            modifier = Modifier.size(36.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Close,
+                                                contentDescription = "Remove $label",
+                                                tint = Color(0xFFEF4444),
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
+                                    }
+                                } else {
+                                    // View Mode: Show Text
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 12.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text(
+                                            text = label,
+                                            style = MaterialTheme.typography.bodyMedium.copy(
+                                                fontSize = 15.sp
+                                            ),
+                                            color = TextDarkColor
+                                        )
+                                        Text(
+                                            text = editedValues[label] ?: "",
+                                            style = MaterialTheme.typography.bodyMedium.copy(
+                                                fontWeight = FontWeight.SemiBold,
+                                                fontSize = 15.sp
+                                            ),
+                                            color = TextDarkColor
+                                        )
+                                    }
+                                    if (index < keys.size - 1) {
+                                        HorizontalDivider(color = CardBorderColor)
+                                    }
                                 }
                             }
                         }
@@ -258,9 +411,18 @@ fun ReviewValuesScreen(
                         onClick = {
                             if (isLoading) return@Button
                             isLoading = true
+                            // Auto save before submit if needed, or just submit
+                            onSaveClick(
+                                editedValues.toMap(),
+                                com.simats.drugssearch.network.PatientDetails(patientName, patientAge, patientGender),
+                                remarks
+                            )
                             scope.launch {
-                                // Simulate API call or perform actual call
-                                onSubmitForAnalysisClick()
+                                onSubmitForAnalysisClick(
+                                    editedValues.toMap(),
+                                    com.simats.drugssearch.network.PatientDetails(patientName, patientAge, patientGender),
+                                    remarks
+                                )
                                 isLoading = false
                             }
                         },
@@ -282,27 +444,8 @@ fun ReviewValuesScreen(
                             )
                         }
                     }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    OutlinedButton(
-                        onClick = onBackToEditClick,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(50.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, PrimaryBlue),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = PrimaryBlue
-                        )
-                    ) {
-                         Text(
-                            text = "Back to Edit",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-
+                    
+                    // Removed "Back to Edit" button as per user request to stay on page
                     Spacer(modifier = Modifier.height(24.dp))
 
                     // Links

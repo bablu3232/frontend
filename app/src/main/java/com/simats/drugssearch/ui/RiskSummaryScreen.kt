@@ -66,9 +66,15 @@ private val normalRanges = mapOf(
     "Blood Glucose" to (70.0 to 99.0),
     "Sodium" to (135.0 to 145.0),
     "Total Cholesterol" to (0.0 to 200.0),
+    "HDL Cholesterol" to (40.0 to 999.0),
     "LDL Cholesterol" to (0.0 to 100.0),
+    "Triglycerides" to (0.0 to 150.0),
+    "VLDL Cholesterol" to (5.0 to 40.0),
+    "T-Chol/HDL Ratio" to (3.3 to 5.0),
+    "LDL/HDL Ratio" to (1.0 to 3.6),
     "Creatinine" to (0.6 to 1.3),
-    "eGFR" to (90.0 to 999.0)
+    "eGFR" to (90.0 to 999.0),
+    "Glucose" to (70.0 to 99.0)
 )
 
 private fun isValueNormal(name: String, value: String): Boolean {

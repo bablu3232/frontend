@@ -45,17 +45,19 @@ fun PersonalInformationScreen(
     userId: Int,
     initialName: String = "John Doe",
     initialEmail: String = "john.doe@email.com",
-    initialPhone: String = "+1 (555) 123-4567",
+    initialPhone: String = "",
+    initialDob: String = "",
+    initialGender: String = "",
     onBackClick: () -> Unit = {},
     onHomeClick: () -> Unit = {},
     onSaveClick: (String, String, String, String, String) -> Unit = { _, _, _, _, _ -> },
     onCancelClick: () -> Unit = {}
 ) {
-    var name by remember { mutableStateOf(initialName) }
-    var email by remember { mutableStateOf(initialEmail) }
-    var phone by remember { mutableStateOf(initialPhone) }
-    var dob by remember { mutableStateOf("") }
-    var gender by remember { mutableStateOf("") }
+    var name by remember(initialName) { mutableStateOf(initialName) }
+    var email by remember(initialEmail) { mutableStateOf(initialEmail) }
+    var phone by remember(initialPhone) { mutableStateOf(initialPhone) }
+    var dob by remember(initialDob) { mutableStateOf(initialDob) }
+    var gender by remember(initialGender) { mutableStateOf(initialGender) }
     
     var isLoading by remember { mutableStateOf(false) }
     var apiMessage by remember { mutableStateOf<String?>(null) }
@@ -146,6 +148,12 @@ fun PersonalInformationScreen(
                             },
                             year, month, day
                         )
+                        
+                        // Restrict age to 18+
+                        // Calculate max date: Current date minus 18 years
+                        val maxDateCalendar = Calendar.getInstance()
+                        maxDateCalendar.add(Calendar.YEAR, -18)
+                        datePickerDialog.datePicker.maxDate = maxDateCalendar.timeInMillis
 
                         Text(
                             text = "Date of Birth",

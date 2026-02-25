@@ -56,6 +56,9 @@ private val ProfileIcon = Color(0xFFF97316)
 @Composable
 fun DashboardScreen(
     userName: String = "John",
+    totalReports: Int = 0,
+    normalReports: Int = 0,
+    abnormalReports: Int = 0,
     onUploadClick: () -> Unit = {},
     onSearchClick: () -> Unit = {},
     onHistoryClick: () -> Unit = {},
@@ -199,9 +202,9 @@ fun DashboardScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                StatItem("12", "Total Reports")
-                                StatItem("8", "Normal")
-                                StatItem("4", "Abnormal")
+                                StatItem("$totalReports", "Total Reports")
+                                StatItem("$normalReports", "Normal")
+                                StatItem("$abnormalReports", "Abnormal")
                             }
                         }
                     }

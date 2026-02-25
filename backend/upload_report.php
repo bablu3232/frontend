@@ -96,6 +96,20 @@ if ($output !== null && stripos($output, "OCR OUTPUT:") !== false) {
     $extracted_text = $output === null ? '' : trim($output);
 }
 
+// Parse patient details safely
+$patientName = null;
+$patientAge = null;
+$patientGender = null;
+
+if (!empty($extracted_text)) {
+    $json = json_decode($extracted_text, true);
+    if ($json && isset($json['patient_details'])) {
+        $patientName = $json['patient_details']['name'] ?? null;
+        $patientAge = $json['patient_details']['age'] ?? null;
+        $patientGender = $json['patient_details']['gender'] ?? null;
+    }
+}
+
 
 // Enable error reporting for debugging
 error_reporting(E_ALL);

@@ -55,6 +55,7 @@ private val RedColor = Color(0xFFEF4444)
 fun ProfileScreen(
     userName: String = "John Doe",
     userEmail: String = "john.doe@email.com",
+    userPhone: String = "+1 (555) 123-4567",
     totalReports: Int = 12,
     normalReports: Int = 8,
     abnormalReports: Int = 4,
@@ -107,6 +108,7 @@ fun ProfileScreen(
                 ProfileHeaderSection(
                     userName = userName,
                     userEmail = userEmail,
+                    userPhone = userPhone,
                     totalReports = totalReports,
                     normalReports = normalReports,
                     abnormalReports = abnormalReports
@@ -299,6 +301,7 @@ private fun ProfileTopBar(
 private fun ProfileHeaderSection(
     userName: String,
     userEmail: String,
+    userPhone: String,
     totalReports: Int,
     normalReports: Int,
     abnormalReports: Int
@@ -345,6 +348,15 @@ private fun ProfileHeaderSection(
         // User Email
         Text(
             text = userEmail,
+            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
+            color = TextGrayColor
+        )
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        // User Phone
+        Text(
+            text = userPhone,
             style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
             color = TextGrayColor
         )

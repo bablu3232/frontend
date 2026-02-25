@@ -48,6 +48,7 @@ private val MedicineIconBg = Color(0xFFDCFCE7)
 
 // Drug Recommendation data class
 data class DrugRecommendation(
+    val parameterName: String, // Added parameter name (e.g., "Hemoglobin")
     val name: String, // General Category Name, e.g. "Statins"
     val condition: String,
     val category: String,
@@ -56,96 +57,10 @@ data class DrugRecommendation(
     val categoryBg: Color
 )
 
-// Get recommendations based on category
-private fun getRecommendationsForCategory(categoryName: String): List<DrugRecommendation> {
-    return when (categoryName) {
-        "Blood Count" -> listOf(
-            DrugRecommendation(
-                name = "Iron Supplements",
-                condition = "Iron Deficiency Anemia",
-                category = "Minerals",
-                commonDrugs = listOf("Ferrous Sulfate", "Ferrous Gluconate", "Ferric Citrate"),
-                categoryColor = Color(0xFFDC2626),
-                categoryBg = Color(0xFFFEE2E2)
-            ),
-            DrugRecommendation(
-                name = "Vitamin B12",
-                condition = "Vitamin Deficiency / Anemia",
-                category = "Vitamins",
-                commonDrugs = listOf("Cyanocobalamin", "Methylcobalamin", "Hydroxocobalamin"),
-                categoryColor = Color(0xFFDC2626),
-                categoryBg = Color(0xFFFEE2E2)
-            ),
-            DrugRecommendation(
-                name = "Folic Acid",
-                condition = "Folate Deficiency",
-                category = "Vitamins",
-                commonDrugs = listOf("Folic Acid (Vitamin B9)", "L-Methylfolate"),
-                categoryColor = Color(0xFFDC2626),
-                categoryBg = Color(0xFFFEE2E2)
-            )
-        )
-        "Metabolic Panel" -> listOf(
-            DrugRecommendation(
-                name = "Antidiabetics (Biguanides)",
-                condition = "Type 2 Diabetes / High Blood Sugar",
-                category = "Metabolic Agents",
-                commonDrugs = listOf("Metformin", "Metformin ER"),
-                categoryColor = Color(0xFF7C3AED),
-                categoryBg = Color(0xFFF3E8FF)
-            ),
-            DrugRecommendation(
-                name = "Electrolytes",
-                condition = "Electrolyte Imbalance",
-                category = "Supplements",
-                commonDrugs = listOf("Potassium Chloride", "Magnesium Oxide", "Sodium Chloride"),
-                categoryColor = Color(0xFF7C3AED),
-                categoryBg = Color(0xFFF3E8FF)
-            )
-        )
-        "Lipid Profile" -> listOf(
-            DrugRecommendation(
-                name = "Statins",
-                condition = "High Cholesterol / Hyperlipidemia",
-                category = "Lipid-Lowering Agents",
-                commonDrugs = listOf("Atorvastatin", "Rosuvastatin", "Simvastatin", "Pravastatin"),
-                categoryColor = Color(0xFFEF4444),
-                categoryBg = Color(0xFFFEE2E2)
-            ),
-            DrugRecommendation(
-                name = "Fibrates",
-                condition = "High Triglycerides",
-                category = "Lipid-Lowering Agents",
-                commonDrugs = listOf("Fenofibrate", "Gemfibrozil"),
-                categoryColor = Color(0xFFEF4444),
-                categoryBg = Color(0xFFFEE2E2)
-            )
-        )
-        "Kidney Function" -> listOf(
-            DrugRecommendation(
-                name = "ACE Inhibitors",
-                condition = "Hypertension / Kidney Protection",
-                category = "Antihypertensives",
-                commonDrugs = listOf("Lisinopril", "Enalapril", "Ramipril"),
-                categoryColor = Color(0xFF0891B2),
-                categoryBg = Color(0xFFCFFAFE)
-            ),
-            DrugRecommendation(
-                name = "Loop Diuretics",
-                condition = "Fluid Retention / Edema",
-                category = "Diuretics",
-                commonDrugs = listOf("Furosemide", "Bumetanide", "Torsemide"),
-                categoryColor = Color(0xFF0891B2),
-                categoryBg = Color(0xFFCFFAFE)
-            )
-        )
-        else -> emptyList()
-    }
-}
-
 @Composable
 fun DrugRecommendationsScreen(
     categoryName: String = "Blood Count",
+    recommendations: List<DrugRecommendation> = emptyList(),
     onBackClick: () -> Unit = {},
     onHomeClick: () -> Unit = {},
     onDrugDetailsClick: (DrugRecommendation) -> Unit = {},
@@ -156,7 +71,7 @@ fun DrugRecommendationsScreen(
     onProfileClick: () -> Unit = {},
     onUploadClick: () -> Unit = {}
 ) {
-    val recommendations = getRecommendationsForCategory(categoryName)
+
 
     Scaffold(
         bottomBar = {
@@ -297,103 +212,114 @@ fun DrugRecommendationsScreen(
                         modifier = Modifier
                             .weight(1f)
                             .height(52.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue)
-                    ) {
-                        Text(
-                            text = "Counselling Notes",
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 13.sp
-                            ),
-                            color = Color.White
-                        )
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue)
+                        ) {
+                            Text(
+                                text = "Counselling Notes",
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 13.sp
+                                ),
+                                color = Color.White
+                            )
+                        }
                     }
+    
+                    Spacer(modifier = Modifier.height(24.dp))
                 }
-
-                Spacer(modifier = Modifier.height(24.dp))
             }
         }
     }
-}
-
-@Composable
-private fun DrugRecommendationCard(
-    recommendation: DrugRecommendation,
-    onDetailsClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .border(1.dp, CardBorderColor, RoundedCornerShape(16.dp)),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    
+    @Composable
+    private fun DrugRecommendationCard(
+        recommendation: DrugRecommendation,
+        onDetailsClick: () -> Unit
     ) {
-        Column(
+        Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp)
+                .border(1.dp, CardBorderColor, RoundedCornerShape(16.dp)),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp)
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .background(MedicineIconBg, CircleShape),
-                    contentAlignment = Alignment.Center
+                // Parameter Name Header
+                 Text(
+                    text = "Parameter: ${recommendation.parameterName}",
+                    style = MaterialTheme.typography.labelLarge.copy(
+                        fontWeight = FontWeight.ExtraBold,
+                        color = PrimaryBlue
+                    )
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.MedicalServices,
-                        contentDescription = null,
-                        tint = Color(0xFF22C55E),
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-
-                Spacer(modifier = Modifier.width(16.dp))
-
-                Text(
-                    text = recommendation.name,
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp
-                    ),
-                    color = TextDarkColor,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-            HorizontalDivider(color = Color(0xFFF1F5F9))
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Row(verticalAlignment = Alignment.Top) {
-                Icon(
-                    imageVector = Icons.Default.Info,
-                    contentDescription = null,
-                    tint = PrimaryBlue,
-                    modifier = Modifier.size(20.dp).padding(top = 2.dp)
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Column {
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .background(MedicineIconBg, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.MedicalServices,
+                            contentDescription = null,
+                            tint = Color(0xFF22C55E),
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+    
+                    Spacer(modifier = Modifier.width(16.dp))
+    
                     Text(
-                        text = "Condition:",
-                        style = MaterialTheme.typography.labelMedium.copy(
+                        text = recommendation.name,
+                        style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
-                            color = TextGrayColor
-                        )
-                    )
-                    Text(
-                        text = recommendation.condition,
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            color = TextDarkColor
-                        )
+                            fontSize = 18.sp
+                        ),
+                        color = TextDarkColor,
+                        modifier = Modifier.weight(1f)
                     )
                 }
-            }
+    
+                Spacer(modifier = Modifier.height(16.dp))
+                HorizontalDivider(color = Color(0xFFF1F5F9))
+                Spacer(modifier = Modifier.height(16.dp))
+    
+                Row(verticalAlignment = Alignment.Top) {
+                    Icon(
+                        imageVector = Icons.Default.Info,
+                        contentDescription = null,
+                        tint = PrimaryBlue,
+                        modifier = Modifier.size(20.dp).padding(top = 2.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = "Condition:",
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = TextGrayColor
+                            )
+                        )
+                        Text(
+                            text = recommendation.condition,
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                color = TextDarkColor
+                            )
+                        )
+                    }
+                }
 
             Spacer(modifier = Modifier.height(12.dp))
 

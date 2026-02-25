@@ -48,20 +48,28 @@ data class HealthReport(
     val id: String,
     val type: String,
     val date: String,
+    val uploadedAt: String, // Store formatted time or raw string
     val isNormal: Boolean,
     val abnormalCount: Int = 0,
-    val parameters: List<com.simats.drugssearch.network.ReportParameter> = emptyList()
+    val parameters: List<com.simats.drugssearch.network.ReportParameter> = emptyList(),
+    val patientName: String? = null,
+    val patientAge: Int? = null,
+    val patientGender: String? = null
 )
 
 // ReportParameter is now in Models.kt
+
+// Sort Option Enum
+enum class SortOption {
+    NEWEST, OLDEST, ABNORMAL_FIRST
+}
 
 @Composable
 fun ReportHistoryScreen(
     userId: Int, // Added userId
     onBackClick: () -> Unit = {},
     onHomeClick: () -> Unit = {},
-    onReportClick: (HealthReport) -> Unit = {}, // Keep HealthReport for now to avoid breaking other files, or map UserReport to it
-    onCompareClick: () -> Unit = {},
+    onReportClick: (HealthReport) -> Unit = {},
     onNavigationHomeClick: () -> Unit = {},
     onUploadClick: () -> Unit = {},
     onSearchClick: () -> Unit = {},
@@ -70,6 +78,7 @@ fun ReportHistoryScreen(
     val context = androidx.compose.ui.platform.LocalContext.current
     var reports by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<List<HealthReport>>(emptyList()) }
     var isLoading by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(true) }
+    var sortOption by remember { mutableStateOf(SortOption.NEWEST) }
 
     LaunchedEffect(userId) {
         if (userId != 0) {
@@ -79,13 +88,18 @@ fun ReportHistoryScreen(
                     val userReports = response.body() ?: emptyList()
                     // Map UserReport (API) to HealthReport (UI)
                     reports = userReports.map { apiReport ->
+                        // Format the timestamp if needed
                         HealthReport(
                             id = apiReport.id,
                             type = apiReport.category,
                             date = apiReport.date,
+                            uploadedAt = apiReport.uploadedAt ?: "",
                             isNormal = apiReport.isNormal,
                             abnormalCount = apiReport.abnormalCount,
-                            parameters = apiReport.parameters // ReportParameter is shared/compatible
+                            parameters = apiReport.parameters, // ReportParameter is shared/compatible
+                            patientName = apiReport.patientName,
+                            patientAge = apiReport.patientAge,
+                            patientGender = apiReport.patientGender
                         )
                     }
                 } else {
@@ -104,6 +118,15 @@ fun ReportHistoryScreen(
     val totalReports = reports.size
     val normalReports = reports.count { it.isNormal }
     val abnormalReports = reports.count { !it.isNormal }
+
+    // Sort Logic
+    val sortedReports = remember(reports, sortOption) {
+        when (sortOption) {
+            SortOption.NEWEST -> reports.sortedByDescending { it.id.toIntOrNull() ?: 0 } // Assuming ID correlates with time or parse date if available
+            SortOption.OLDEST -> reports.sortedBy { it.id.toIntOrNull() ?: 0 }
+            SortOption.ABNORMAL_FIRST -> reports.sortedBy { it.isNormal } // False (Abnormal) comes before True (Normal)
+        }
+    }
 
     Scaffold(
         bottomBar = {
@@ -158,13 +181,17 @@ fun ReportHistoryScreen(
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "View and compare past reports",
+                                text = "View your past reports",
                                 style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
                                 color = TextGrayColor
                             )
                         }
-                        
-    
+
+                        // Sort Button
+                        SortMenu(
+                            currentSort = sortOption,
+                            onSortSelected = { sortOption = it }
+                        )
                     }
                 }
 
@@ -201,7 +228,7 @@ fun ReportHistoryScreen(
                 // Report Cards
                 item { Spacer(modifier = Modifier.height(24.dp)) }
                 
-                if (reports.isEmpty()) {
+                if (sortedReports.isEmpty()) {
                     item {
                         Text(
                             text = "No reports found.",
@@ -211,7 +238,7 @@ fun ReportHistoryScreen(
                         )
                     }
                 } else {
-                    items(reports) { report ->
+                    items(sortedReports) { report ->
                         ReportCard(
                             report = report,
                             onClick = { onReportClick(report) },
@@ -227,6 +254,65 @@ fun ReportHistoryScreen(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun SortMenu(
+    currentSort: SortOption,
+    onSortSelected: (SortOption) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Box {
+        IconButton(onClick = { expanded = true }) {
+            Icon(
+                imageVector = Icons.Default.Sort,
+                contentDescription = "Sort",
+                tint = PrimaryBlue
+            )
+        }
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            DropdownMenuItem(
+                text = { Text("Newest First") },
+                onClick = {
+                    onSortSelected(SortOption.NEWEST)
+                    expanded = false
+                },
+                leadingIcon = {
+                    if (currentSort == SortOption.NEWEST) {
+                        Icon(Icons.Default.Check, contentDescription = null)
+                    }
+                }
+            )
+            DropdownMenuItem(
+                text = { Text("Oldest First") },
+                onClick = {
+                    onSortSelected(SortOption.OLDEST)
+                    expanded = false
+                },
+                leadingIcon = {
+                    if (currentSort == SortOption.OLDEST) {
+                        Icon(Icons.Default.Check, contentDescription = null)
+                    }
+                }
+            )
+            DropdownMenuItem(
+                text = { Text("Abnormal First") },
+                onClick = {
+                    onSortSelected(SortOption.ABNORMAL_FIRST)
+                    expanded = false
+                },
+                leadingIcon = {
+                    if (currentSort == SortOption.ABNORMAL_FIRST) {
+                        Icon(Icons.Default.Check, contentDescription = null)
+                    }
+                }
+            )
         }
     }
 }
@@ -374,20 +460,74 @@ private fun ReportCard(
 
             // Report Info
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = report.type,
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 16.sp
-                    ),
-                    color = TextDarkColor
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = report.date,
-                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp),
-                    color = TextGrayColor
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = report.type,
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 16.sp
+                        ),
+                        color = TextDarkColor
+                    )
+                    
+                    // Report ID Badge
+                    Surface(
+                        color = BackgroundColor,
+                        shape = RoundedCornerShape(4.dp),
+                        modifier = Modifier
+                    ) {
+                        Text(
+                            text = "#${report.id}",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 10.sp
+                            ),
+                            color = TextGrayColor,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(4.dp))
+                
+                // Date and Time
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.CalendarToday,
+                        contentDescription = null,
+                        tint = TextGrayColor,
+                        modifier = Modifier.size(12.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = report.date,
+                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp),
+                        color = TextGrayColor
+                    )
+                    
+                    if (report.uploadedAt.isNotEmpty()) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Icon(
+                            imageVector = Icons.Default.AccessTime,
+                            contentDescription = null,
+                            tint = TextGrayColor,
+                            modifier = Modifier.size(12.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                         // Display only time part if possible, but full string is fine for now
+                        Text(
+                            text = report.uploadedAt, 
+                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp),
+                            color = TextGrayColor,
+                            maxLines = 1
+                        )
+                    }
+                }
+                
                 Spacer(modifier = Modifier.height(6.dp))
                 
                 // Status Badge
@@ -412,8 +552,8 @@ private fun ReportCard(
 
             // Document Icon
             Icon(
-                imageVector = Icons.Default.Description,
-                contentDescription = "View Report",
+                imageVector = Icons.Default.ChevronRight, // Changed to ChevronRight for better affordance
+                contentDescription = "View Details",
                 tint = TextGrayColor,
                 modifier = Modifier.size(24.dp)
             )

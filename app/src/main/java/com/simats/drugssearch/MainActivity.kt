@@ -17,6 +17,7 @@ import com.simats.drugssearch.network.SaveReportRequest
 import com.simats.drugssearch.network.ReportParameter
 import com.simats.drugssearch.network.Drug
 import kotlinx.coroutines.launch
+import androidx.compose.ui.platform.LocalContext
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -49,6 +50,8 @@ enum class Screen {
     MetabolicPanelEntry,
     LipidProfileEntry,
     KidneyFunctionEntry,
+    LiverFunctionEntry,
+    ThyroidPanelEntry,
     ReportAnalysis,
     ReportHistory,
     SearchDrugInformation,
@@ -57,7 +60,6 @@ enum class Screen {
     Profile,
     ChangePassword,
     ReportDetail,
-    CompareReports,
     DrugRecommendations,
     ForgotPassword,
     CheckEmail,
@@ -67,18 +69,29 @@ enum class Screen {
     DrugCategories,
     NormalResults,
     AbnormalResults,
-    RiskSummary
+    RiskSummary,
+    AboutApp,
+    SafetyWarnings,
+    CounsellingNotes,
+    HelpSupport,
+    FAQ
 }
 
 @Composable
 fun AppNavigation() {
+    val context = LocalContext.current
+    val sessionManager = remember { SessionManager(context) }
+
     var currentScreen by remember { mutableStateOf(Screen.Splash) }
     var previousScreen by remember { mutableStateOf<Screen?>(null) }
     
-    // User Session
-    var userEmail by remember { mutableStateOf("") }
-    var loggedInUserId by remember { mutableStateOf<Int?>(null) }
-    var loggedInUserName by remember { mutableStateOf("") }
+    // User Session — initialize from saved session if available
+    var userEmail by remember { mutableStateOf(sessionManager.getEmail()) }
+    var loggedInUserId by remember { mutableStateOf<Int?>(if (sessionManager.isLoggedIn()) sessionManager.getUserId() else null) }
+    var loggedInUserName by remember { mutableStateOf(sessionManager.getUserName()) }
+    var userPhone by remember { mutableStateOf(sessionManager.getPhone()) }
+    var userDob by remember { mutableStateOf(sessionManager.getDob()) }
+    var userGender by remember { mutableStateOf(sessionManager.getGender()) }
     
     // Upload & Report State
     var selectedCategory by remember { mutableStateOf("") }
@@ -89,11 +102,12 @@ fun AppNavigation() {
     var metabolicPanelValues by remember { mutableStateOf(MetabolicPanelValues()) }
     var lipidProfileValues by remember { mutableStateOf(LipidProfileValues()) }
     var kidneyFunctionValues by remember { mutableStateOf(KidneyFunctionValues()) }
+    var liverFunctionValues by remember { mutableStateOf(LiverFunctionValues()) }
+    var thyroidPanelValues by remember { mutableStateOf(ThyroidPanelValues()) }
     
     // Report History State
     var selectedReport by remember { mutableStateOf<HealthReport?>(null) }
-    var selectedReport1 by remember { mutableStateOf<HealthReport?>(null) }
-    var selectedReport2 by remember { mutableStateOf<HealthReport?>(null) }
+
 
     // Search State
     var searchQuery by remember { mutableStateOf("") }
@@ -101,6 +115,42 @@ fun AppNavigation() {
     var selectedDrug by remember { mutableStateOf<Drug?>(null) }
 
     val scope = rememberCoroutineScope()
+
+    // Dynamic Recommendations State
+    var drugRecommendations by remember { mutableStateOf<List<com.simats.drugssearch.ui.DrugRecommendation>>(emptyList()) }
+    
+
+    // Patient Details State
+    var currentPatientDetails by remember { mutableStateOf<com.simats.drugssearch.network.PatientDetails?>(null) }
+    var currentRemarks by remember { mutableStateOf<String?>(null) }
+    var currentReportId by remember { mutableStateOf<Int?>(null) }
+
+    // Dashboard Stats (dynamic)
+    var dashboardTotalReports by remember { mutableStateOf(0) }
+    var dashboardNormalReports by remember { mutableStateOf(0) }
+    var dashboardAbnormalReports by remember { mutableStateOf(0) }
+
+    // Fetch dashboard stats when user logs in
+    LaunchedEffect(loggedInUserId) {
+        val uid = loggedInUserId
+        if (uid != null) {
+            try {
+                val response = com.simats.drugssearch.network.RetrofitClient.instance.getUserReports(uid)
+                if (response.isSuccessful) {
+                    val reports = response.body() ?: emptyList()
+                    dashboardTotalReports = reports.size
+                    dashboardNormalReports = reports.count { it.isNormal }
+                    dashboardAbnormalReports = reports.count { !it.isNormal }
+                }
+            } catch (_: Exception) {
+                // Silently fail — stats stay at 0
+            }
+        } else {
+            dashboardTotalReports = 0
+            dashboardNormalReports = 0
+            dashboardAbnormalReports = 0
+        }
+    }
 
     // Derived values for review/analysis
     val valuesForReview = when (selectedCategory) {
@@ -130,6 +180,23 @@ fun AppNavigation() {
             "eGFR" to kidneyFunctionValues.egfr,
             "Uric Acid" to kidneyFunctionValues.uricAcid
         )
+        "Liver Function" -> mapOf(
+            "SGOT" to liverFunctionValues.sgot,
+            "SGPT" to liverFunctionValues.sgpt,
+            "ALP" to liverFunctionValues.alp,
+            "Total Bilirubin" to liverFunctionValues.totalBilirubin,
+            "Direct Bilirubin" to liverFunctionValues.directBilirubin,
+            "Albumin" to liverFunctionValues.albumin,
+            "Total Protein" to liverFunctionValues.totalProtein,
+            "GGT" to liverFunctionValues.ggt
+        )
+        "Thyroid Panel" -> mapOf(
+            "TSH" to thyroidPanelValues.tsh,
+            "Free T4" to thyroidPanelValues.freeT4,
+            "Free T3" to thyroidPanelValues.freeT3,
+            "Total T4" to thyroidPanelValues.totalT4,
+            "Total T3" to thyroidPanelValues.totalT3
+        )
         else -> reviewValuesMap
     }
 
@@ -137,7 +204,13 @@ fun AppNavigation() {
     fun getVal(map: Map<String, String>, key: String): String = map[key] ?: ""
 
     when (currentScreen) {
-        Screen.Splash -> SplashScreen(onSplashComplete = { currentScreen = Screen.Welcome })
+        Screen.Splash -> SplashScreen(onSplashComplete = {
+            if (sessionManager.isLoggedIn()) {
+                currentScreen = Screen.Dashboard
+            } else {
+                currentScreen = Screen.Welcome
+            }
+        })
         
         Screen.Welcome -> WelcomeScreen(
             onLoginClick = { currentScreen = Screen.Login },
@@ -145,10 +218,14 @@ fun AppNavigation() {
         )
         
         Screen.Login -> LoginScreen(
-            onLoginSuccess = { userId, fullName, email -> 
+            onLoginSuccess = { userId, fullName, email, phone, dob, gender -> 
                 loggedInUserId = userId
                 loggedInUserName = fullName
                 userEmail = email
+                userPhone = phone
+                userDob = dob
+                userGender = gender
+                sessionManager.saveSession(userId, fullName, email, phone, dob, gender)
                 currentScreen = Screen.Dashboard 
             },
             onRegisterClick = { currentScreen = Screen.Register },
@@ -171,6 +248,9 @@ fun AppNavigation() {
         
         Screen.Dashboard -> DashboardScreen(
             userName = loggedInUserName,
+            totalReports = dashboardTotalReports,
+            normalReports = dashboardNormalReports,
+            abnormalReports = dashboardAbnormalReports,
             onUploadClick = { currentScreen = Screen.Upload },
             onSearchClick = { currentScreen = Screen.SearchDrugInformation },
             onHistoryClick = { currentScreen = Screen.ReportHistory },
@@ -182,7 +262,10 @@ fun AppNavigation() {
             onBackClick = { currentScreen = Screen.Dashboard },
             onHomeClick = { currentScreen = Screen.Dashboard },
             onUploadReportClick = { currentScreen = Screen.FileSelected },
-            onManualEntryClick = { currentScreen = Screen.ManualEntry },
+            onManualEntryClick = { 
+                currentReportId = null // Reset for manual entry
+                currentScreen = Screen.ManualEntry 
+            },
             onSearchClick = { currentScreen = Screen.SearchDrugInformation },
             onHistoryClick = { currentScreen = Screen.ReportHistory },
             onProfileClick = { currentScreen = Screen.Profile }
@@ -193,47 +276,14 @@ fun AppNavigation() {
             onBackClick = { currentScreen = Screen.Upload },
             onHomeClick = { currentScreen = Screen.Dashboard },
             onChooseDifferentFileClick = { /* Handled in screen */ },
-            onUploadSuccess = { values, category ->
+            onUploadSuccess = { values, category, recommendations, patientDetails, reportId ->
                 selectedCategory = category
-                when (category) {
-                    "Blood Count" -> {
-                        bloodCountValues = BloodCountValues(
-                            hemoglobin = getVal(values, "Hemoglobin"),
-                            wbcCount = getVal(values, "WBC"),
-                            rbcCount = getVal(values, "RBC"),
-                            plateletCount = getVal(values, "Platelets"),
-                            hematocrit = getVal(values, "Hematocrit")
-                        )
-                    }
-                    "Metabolic Panel" -> {
-                        metabolicPanelValues = MetabolicPanelValues(
-                            bloodGlucose = getVal(values, "Glucose"),
-                            sodium = getVal(values, "Sodium"),
-                            potassium = getVal(values, "Potassium"),
-                            calcium = getVal(values, "Calcium"),
-                            bicarbonate = getVal(values, "Bicarbonate")
-                        )
-                    }
-                     "Lipid Profile" -> {
-                          lipidProfileValues = LipidProfileValues(
-                              totalCholesterol = getVal(values, "Cholesterol"),
-                              hdlCholesterol = getVal(values, "HDL"),
-                              ldlCholesterol = getVal(values, "LDL"),
-                              triglycerides = getVal(values, "Triglycerides")
-                          )
-                      }
-                    "Kidney Function" -> {
-                         kidneyFunctionValues = KidneyFunctionValues(
-                             creatinine = getVal(values, "Creatinine"),
-                             bun = getVal(values, "BUN"),
-                             egfr = getVal(values, "eGFR"),
-                             uricAcid = getVal(values, "Uric Acid")
-                         )
-                     }
-                    else -> {
-                        reviewValuesMap = values
-                    }
-                }
+                drugRecommendations = recommendations
+                currentPatientDetails = patientDetails
+                currentReportId = reportId
+                // For OCR uploads, pass ALL extracted parameters to review/analysis
+                // Don't filter through category-specific models — those are for manual entry only
+                reviewValuesMap = values
                 currentScreen = Screen.ReviewValues
             },
             onSearchClick = { currentScreen = Screen.SearchDrugInformation },
@@ -247,6 +297,8 @@ fun AppNavigation() {
                  "Metabolic Panel" -> Screen.MetabolicPanelEntry
                  "Lipid Profile" -> Screen.LipidProfileEntry
                  "Kidney Function" -> Screen.KidneyFunctionEntry
+                 "Liver Function" -> Screen.LiverFunctionEntry
+                 "Thyroid Panel" -> Screen.ThyroidPanelEntry
                  else -> Screen.ManualEntry 
             }
 
@@ -254,29 +306,140 @@ fun AppNavigation() {
                 userId = loggedInUserId ?: 0,
                 categoryName = selectedCategory,
                 values = valuesForReview,
+                initialPatientDetails = currentPatientDetails,
                 onBackClick = { currentScreen = Screen.Upload },
                 onHomeClick = { currentScreen = Screen.Dashboard },
-                onEditClick = { 
-                    previousScreen = Screen.ReviewValues
-                    currentScreen = editTargetScreen 
+                onSaveClick = { newValues, patientDetails, remarks ->
+                    currentPatientDetails = patientDetails
+                    currentRemarks = remarks
+                     when (selectedCategory) {
+                        "Blood Count" -> {
+                            bloodCountValues = BloodCountValues(
+                                hemoglobin = getVal(newValues, "Hemoglobin"),
+                                wbcCount = getVal(newValues, "WBC"),
+                                rbcCount = getVal(newValues, "RBC"),
+                                plateletCount = getVal(newValues, "Platelets"),
+                                hematocrit = getVal(newValues, "Hematocrit")
+                            )
+                        }
+                        "Metabolic Panel" -> {
+                            metabolicPanelValues = MetabolicPanelValues(
+                                bloodGlucose = getVal(newValues, "Blood Glucose"),
+                                sodium = getVal(newValues, "Sodium"),
+                                potassium = getVal(newValues, "Potassium"),
+                                calcium = getVal(newValues, "Calcium"),
+                                bicarbonate = getVal(newValues, "Bicarbonate")
+                            )
+                        }
+                         "Lipid Profile" -> {
+                              lipidProfileValues = LipidProfileValues(
+                                  totalCholesterol = getVal(newValues, "Total Cholesterol"),
+                                  hdlCholesterol = getVal(newValues, "HDL Cholesterol"),
+                                  ldlCholesterol = getVal(newValues, "LDL Cholesterol"),
+                                  triglycerides = getVal(newValues, "Triglycerides")
+                              )
+                          }
+                        "Kidney Function" -> {
+                             kidneyFunctionValues = KidneyFunctionValues(
+                                 creatinine = getVal(newValues, "Creatinine"),
+                                 bun = getVal(newValues, "BUN"),
+                                 egfr = getVal(newValues, "eGFR"),
+                                 uricAcid = getVal(newValues, "Uric Acid")
+                             )
+                         }
+                        "Liver Function" -> {
+                             liverFunctionValues = LiverFunctionValues(
+                                 sgot = getVal(newValues, "SGOT"),
+                                 sgpt = getVal(newValues, "SGPT"),
+                                 alp = getVal(newValues, "ALP"),
+                                 totalBilirubin = getVal(newValues, "Total Bilirubin"),
+                                 directBilirubin = getVal(newValues, "Direct Bilirubin"),
+                                 albumin = getVal(newValues, "Albumin"),
+                                 totalProtein = getVal(newValues, "Total Protein"),
+                                 ggt = getVal(newValues, "GGT")
+                             )
+                         }
+                        "Thyroid Panel" -> {
+                             thyroidPanelValues = ThyroidPanelValues(
+                                 tsh = getVal(newValues, "TSH"),
+                                 freeT4 = getVal(newValues, "Free T4"),
+                                 freeT3 = getVal(newValues, "Free T3"),
+                                 totalT4 = getVal(newValues, "Total T4"),
+                                 totalT3 = getVal(newValues, "Total T3")
+                             )
+                         }
+                        else -> {
+                            reviewValuesMap = newValues.toMap()
+                        }
+                    }
                 },
-                onSubmitForAnalysisClick = { 
+                onSubmitForAnalysisClick = { valuesMap, patientDetails, remarkText ->
                     scope.launch {
                         try {
-                            val parameters = valuesForReview.map { (k, v) ->
+                            // Clear previous recommendations
+                            drugRecommendations = emptyList()
+                            
+                            // Update local state first to persist revisions
+                            currentPatientDetails = patientDetails
+                            currentRemarks = remarkText
+                            // Update specific category values if needed (optional since we use valuesMap for request)
+                            
+                            val parameters = valuesMap.map { (k, v) ->
                                 ReportParameter(name = k, value = v, unit = "", isNormal = false) 
                             }
                             
                             val req = SaveReportRequest(
+                                reportId = currentReportId, // Pass reportId
                                 userId = loggedInUserId ?: 0,
                                 category = selectedCategory,
-                                parameters = parameters
+                                parameters = parameters,
+                                patientName = patientDetails?.name,
+                                patientAge = patientDetails?.age,
+                                patientGender = patientDetails?.gender,
+                                remarks = remarkText
                             )
                             val response = com.simats.drugssearch.network.RetrofitClient.instance.saveReportData(req)
-                            if (response.isSuccessful) {
+                            if (response.isSuccessful && response.body() != null) {
+                                val responseBody = response.body()!!
+                                
+                                // Process Analysis Result (Recommendations)
+                                val analysis = responseBody.analysis
+                                if (analysis != null) {
+                                    val newRecommendations = mutableListOf<com.simats.drugssearch.ui.DrugRecommendation>()
+                                    
+                                    analysis.parameters?.forEach { (name, detail) ->
+                                        if (detail.recommendation != null) {
+                                            val rec = detail.recommendation
+                                            val drugsList = rec.drugs?.split(",")?.map { it.trim() } ?: emptyList()
+                                            
+                                            // Assign a color based on status for now (red for high/low)
+                                            val catColor = if (detail.status == "Normal") com.simats.drugssearch.ui.theme.GreenColor else com.simats.drugssearch.ui.theme.RedColor
+                                            val catBg = if (detail.status == "Normal") com.simats.drugssearch.ui.theme.GreenBg else com.simats.drugssearch.ui.theme.RedBg
+
+                                            newRecommendations.add(
+                                                com.simats.drugssearch.ui.DrugRecommendation(
+                                                    parameterName = name,
+                                                    name = rec.category ?: "General Recommendation",
+                                                    condition = detail.condition ?: "Abnormal Value",
+                                                    category = detail.category ?: "General",
+                                                    commonDrugs = drugsList,
+                                                    categoryColor = catColor,
+                                                    categoryBg = catBg
+                                                )
+                                            )
+                                        }
+                                    }
+                                    // Update Global State
+                                    drugRecommendations = newRecommendations
+                                } else {
+                                     // Clear recommendations if analysis failed or returned nothing
+                                     drugRecommendations = emptyList()
+                                }
+                                
                                 currentScreen = Screen.ReportAnalysis
                             } else {
-                                currentScreen = Screen.ReportAnalysis // Navigate anyway for local analysis
+                                // Request failed
+                                currentScreen = Screen.ReportAnalysis 
                             }
                         } catch (e: Exception) {
                             e.printStackTrace()
@@ -294,12 +457,20 @@ fun AppNavigation() {
             onBackClick = { currentScreen = Screen.Dashboard },
             onHomeClick = { currentScreen = Screen.Dashboard },
             onCategorySelected = { category -> 
+                // Reset state for new entry
+                drugRecommendations = emptyList()
+                currentReportId = null
+                currentPatientDetails = null
+                currentRemarks = ""
+                
                 selectedCategory = category
                 currentScreen = when (category) {
                     "Blood Count" -> Screen.BloodCountEntry
                     "Metabolic Panel" -> Screen.MetabolicPanelEntry
                     "Lipid Profile" -> Screen.LipidProfileEntry
                     "Kidney Function" -> Screen.KidneyFunctionEntry
+                    "Liver Function" -> Screen.LiverFunctionEntry
+                    "Thyroid Panel" -> Screen.ThyroidPanelEntry
                     else -> Screen.ManualEntry
                 }
             },
@@ -364,6 +535,34 @@ fun AppNavigation() {
             onProfileClick = { currentScreen = Screen.Profile }
         )
         
+        Screen.LiverFunctionEntry -> LiverFunctionEntryScreen(
+             initialValues = liverFunctionValues,
+             onSubmitClick = { values ->
+                liverFunctionValues = values
+                selectedCategory = "Liver Function"
+                currentScreen = Screen.ReviewValues
+            },
+             onBackClick = { currentScreen = if (previousScreen == Screen.ReviewValues) Screen.ReviewValues else Screen.ManualEntry },
+             onHomeClick = { currentScreen = Screen.Dashboard },
+             onSearchClick = { currentScreen = Screen.SearchDrugInformation },
+            onHistoryClick = { currentScreen = Screen.ReportHistory },
+            onProfileClick = { currentScreen = Screen.Profile }
+        )
+        
+        Screen.ThyroidPanelEntry -> ThyroidPanelEntryScreen(
+             initialValues = thyroidPanelValues,
+             onSubmitClick = { values ->
+                thyroidPanelValues = values
+                selectedCategory = "Thyroid Panel"
+                currentScreen = Screen.ReviewValues
+            },
+             onBackClick = { currentScreen = if (previousScreen == Screen.ReviewValues) Screen.ReviewValues else Screen.ManualEntry },
+             onHomeClick = { currentScreen = Screen.Dashboard },
+             onSearchClick = { currentScreen = Screen.SearchDrugInformation },
+            onHistoryClick = { currentScreen = Screen.ReportHistory },
+            onProfileClick = { currentScreen = Screen.Profile }
+        )
+        
         Screen.ReportAnalysis -> ReportAnalysisScreen(
              categoryName = selectedCategory,
              values = valuesForReview,
@@ -415,13 +614,32 @@ fun AppNavigation() {
         
         Screen.DrugRecommendations -> DrugRecommendationsScreen(
             categoryName = selectedCategory,
+            recommendations = drugRecommendations,
             onBackClick = { currentScreen = Screen.ReportAnalysis },
             onHomeClick = { currentScreen = Screen.Dashboard },
+            onSafetyWarningsClick = { currentScreen = Screen.SafetyWarnings },
+            onCounsellingNotesClick = { currentScreen = Screen.CounsellingNotes },
             onDrugDetailsClick = { /* recommendation -> Mock Drug Details navigation */ },
             onSearchClick = { currentScreen = Screen.SearchDrugInformation },
             onHistoryClick = { currentScreen = Screen.ReportHistory },
             onProfileClick = { currentScreen = Screen.Profile },
             onUploadClick = { currentScreen = Screen.Upload }
+        )
+
+        Screen.SafetyWarnings -> SafetyWarningsScreen(
+            onBackClick = { currentScreen = Screen.DrugRecommendations },
+            onHomeClick = { currentScreen = Screen.Dashboard },
+            onSearchClick = { currentScreen = Screen.SearchDrugInformation },
+            onHistoryClick = { currentScreen = Screen.ReportHistory },
+            onProfileClick = { currentScreen = Screen.Profile }
+        )
+
+        Screen.CounsellingNotes -> CounsellingNotesScreen(
+            onBackClick = { currentScreen = Screen.DrugRecommendations },
+            onHomeClick = { currentScreen = Screen.Dashboard },
+            onSearchClick = { currentScreen = Screen.SearchDrugInformation },
+            onHistoryClick = { currentScreen = Screen.ReportHistory },
+            onProfileClick = { currentScreen = Screen.Profile }
         )
 
         Screen.ForgotPassword -> ForgotPasswordScreen(
@@ -458,11 +676,6 @@ fun AppNavigation() {
             onReportClick = { report -> 
                 selectedReport = report
                 currentScreen = Screen.ReportDetail
-            },
-            onCompareClick = { 
-                 if (selectedReport1 != null && selectedReport2 != null) {
-                    currentScreen = Screen.CompareReports
-                 }
             },
             onNavigationHomeClick = { currentScreen = Screen.Dashboard },
             onUploadClick = { currentScreen = Screen.Upload },
@@ -534,12 +747,14 @@ fun AppNavigation() {
         Screen.DrugDetails -> {
             if (selectedDrug != null) {
                 val uiDrug = DrugDetails(
-                    name = selectedDrug!!.name,
-                    condition = selectedDrug!!.condition,
-                    commonUses = selectedDrug!!.description ?: "",
-                    typicalDosage = selectedDrug!!.dosages.joinToString(", "),
+                    name = selectedDrug!!.drugName,
+                    genericName = selectedDrug!!.genericName ?: "",
+                    drugCategory = selectedDrug!!.drugCategory ?: "",
+                    indication = selectedDrug!!.indication ?: "",
+                    typicalDosage = selectedDrug!!.commonDosage ?: "",
                     sideEffects = selectedDrug!!.sideEffects ?: "",
-                    precautions = selectedDrug!!.warnings ?: ""
+                    safetyWarnings = selectedDrug!!.safetyWarnings ?: "",
+                    storageDetails = selectedDrug!!.storageDetails ?: ""
                 )
                 DrugDetailsScreen(
                     drug = uiDrug,
@@ -555,35 +770,57 @@ fun AppNavigation() {
             }
         }
         
-        Screen.Profile -> ProfileScreen(
-             userName = loggedInUserName,
-             userEmail = userEmail,
-             onBackClick = { currentScreen = Screen.Dashboard },
-             onPersonalInfoClick = { currentScreen = Screen.PersonalInformation },
-             onPrivacySecurityClick = { currentScreen = Screen.PrivacySecurity },
-             onLogoutClick = {
-                  loggedInUserId = null
-                  loggedInUserName = ""
-                  userEmail = ""
-                  currentScreen = Screen.Welcome
-             },
-             onAboutAppClick = { currentScreen = Screen.Splash }, // Temporary or add Screen.AboutApp
-             onHomeClick = { currentScreen = Screen.Dashboard },
-             onNavigationHomeClick = { currentScreen = Screen.Dashboard },
-             onSearchClick = { currentScreen = Screen.SearchDrugInformation },
-             onHistoryClick = { currentScreen = Screen.ReportHistory },
-             onUploadClick = { currentScreen = Screen.Upload }
-        )
+        Screen.Profile -> {
+            key(loggedInUserName, userEmail, userPhone, userDob, userGender) {
+                ProfileScreen(
+                     userName = loggedInUserName,
+                     userEmail = userEmail,
+                     userPhone = userPhone,
+                     onBackClick = { currentScreen = Screen.Dashboard },
+                     onPersonalInfoClick = { currentScreen = Screen.PersonalInformation },
+                     onPrivacySecurityClick = { currentScreen = Screen.PrivacySecurity },
+                     onLogoutClick = {
+                          sessionManager.clearSession()
+                          loggedInUserId = null
+                          loggedInUserName = ""
+                          userEmail = ""
+                          userPhone = ""
+                          userDob = ""
+                          userGender = ""
+                          currentScreen = Screen.Welcome
+                     },
+                     onAboutAppClick = { currentScreen = Screen.AboutApp },
+                     onHelpSupportClick = { currentScreen = Screen.HelpSupport },
+                     onHomeClick = { currentScreen = Screen.Dashboard },
+                     onNavigationHomeClick = { currentScreen = Screen.Dashboard },
+                     onSearchClick = { currentScreen = Screen.SearchDrugInformation },
+                     onHistoryClick = { currentScreen = Screen.ReportHistory },
+                     onUploadClick = { currentScreen = Screen.Upload }
+                )
+            }
+        }
         
+        Screen.AboutApp -> AboutAppScreen(
+            onBackClick = { currentScreen = Screen.Profile },
+            onHomeClick = { currentScreen = Screen.Dashboard }
+        )
+
         Screen.PersonalInformation -> PersonalInformationScreen(
             userId = loggedInUserId ?: 0,
             initialName = loggedInUserName,
             initialEmail = userEmail,
+            initialPhone = userPhone,
+            initialDob = userDob,
+            initialGender = userGender,
             onBackClick = { currentScreen = Screen.Profile },
             onHomeClick = { currentScreen = Screen.Dashboard },
-            onSaveClick = { name, email, _, _, _ ->
+            onSaveClick = { name, email, phone, dob, gender ->
                 loggedInUserName = name
                 userEmail = email
+                userPhone = phone
+                userDob = dob
+                userGender = gender
+                sessionManager.saveSession(loggedInUserId ?: 0, name, email, phone, dob, gender)
                 currentScreen = Screen.Profile
             },
             onCancelClick = { currentScreen = Screen.Profile }
@@ -645,21 +882,15 @@ fun AppNavigation() {
              }
         }
         
-        Screen.CompareReports -> {
-             if (selectedReport1 != null && selectedReport2 != null) {
-                 CompareReportsScreen(
-                     report1 = selectedReport1!!,
-                     report2 = selectedReport2!!,
-                     onBackClick = { currentScreen = Screen.ReportHistory },
-                     onHomeClick = { currentScreen = Screen.Dashboard },
-                     onNavigationHomeClick = { currentScreen = Screen.Dashboard },
-                    onUploadClick = { currentScreen = Screen.Upload },
-                    onSearchClick = { currentScreen = Screen.SearchDrugInformation },
-                    onProfileClick = { currentScreen = Screen.Profile }
-                 )
-             } else {
-                 Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) { Text("Select two reports to compare") }
-             }
-        }
+        Screen.HelpSupport -> HelpSupportScreen(
+            onBackClick = { currentScreen = Screen.Profile },
+            onHomeClick = { currentScreen = Screen.Dashboard },
+            onFaqClick = { currentScreen = Screen.FAQ }
+        )
+
+        Screen.FAQ -> FAQScreen(
+            onBackClick = { currentScreen = Screen.HelpSupport },
+            onHomeClick = { currentScreen = Screen.Dashboard }
+        )
     }
 }
