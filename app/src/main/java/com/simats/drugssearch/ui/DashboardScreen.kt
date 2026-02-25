@@ -63,7 +63,8 @@ fun DashboardScreen(
     onSearchClick: () -> Unit = {},
     onHistoryClick: () -> Unit = {},
     onProfileClick: () -> Unit = {},
-    onHomeClick: () -> Unit = {}
+    onHomeClick: () -> Unit = {},
+    onViewAllClick: () -> Unit = {}
 ) {
     Scaffold(
         bottomBar = {
@@ -232,7 +233,7 @@ fun DashboardScreen(
                                 fontSize = 14.sp
                             ),
                             color = PrimaryBlue,
-                            modifier = Modifier.clickable { /* TODO */ }
+                            modifier = Modifier.clickable { onViewAllClick() }
                         )
                     }
                     

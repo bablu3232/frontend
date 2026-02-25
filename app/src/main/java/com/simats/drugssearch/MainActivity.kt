@@ -255,7 +255,8 @@ fun AppNavigation() {
             onSearchClick = { currentScreen = Screen.SearchDrugInformation },
             onHistoryClick = { currentScreen = Screen.ReportHistory },
             onProfileClick = { currentScreen = Screen.Profile },
-            onHomeClick = { /* Already on dashboard */ }
+            onHomeClick = { /* Already on dashboard */ },
+            onViewAllClick = { currentScreen = Screen.ReportHistory }
         )
         
         Screen.Upload -> UploadScreen(
@@ -776,6 +777,9 @@ fun AppNavigation() {
                      userName = loggedInUserName,
                      userEmail = userEmail,
                      userPhone = userPhone,
+                     totalReports = dashboardTotalReports,
+                     normalReports = dashboardNormalReports,
+                     abnormalReports = dashboardAbnormalReports,
                      onBackClick = { currentScreen = Screen.Dashboard },
                      onPersonalInfoClick = { currentScreen = Screen.PersonalInformation },
                      onPrivacySecurityClick = { currentScreen = Screen.PrivacySecurity },
@@ -840,10 +844,11 @@ fun AppNavigation() {
             onBackClick = { currentScreen = Screen.SearchDrugInformation },
             onHomeClick = { currentScreen = Screen.Dashboard },
             onCategoryClick = { category ->
-                searchQuery = category.name
+                val cleanCategoryName = category.name.replace("\n", " ").trim()
+                searchQuery = cleanCategoryName
                 scope.launch {
                     try {
-                        val response = com.simats.drugssearch.network.RetrofitClient.instance.searchDrugs(category.name)
+                        val response = com.simats.drugssearch.network.RetrofitClient.instance.searchDrugs(cleanCategoryName)
                         if (response.isSuccessful) {
                             searchResults = response.body() ?: emptyList()
                             currentScreen = Screen.SearchResults
@@ -885,7 +890,8 @@ fun AppNavigation() {
         Screen.HelpSupport -> HelpSupportScreen(
             onBackClick = { currentScreen = Screen.Profile },
             onHomeClick = { currentScreen = Screen.Dashboard },
-            onFaqClick = { currentScreen = Screen.FAQ }
+            onFaqClick = { currentScreen = Screen.FAQ },
+            onAboutClick = { currentScreen = Screen.AboutApp }
         )
 
         Screen.FAQ -> FAQScreen(

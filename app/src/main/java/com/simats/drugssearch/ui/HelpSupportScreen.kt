@@ -134,7 +134,7 @@ fun HelpSupportScreen(
                     )
                 ) {
                     Text(
-                        text = "About HealthCare",
+                        text = "About DrugsSearch",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold
                         ),
