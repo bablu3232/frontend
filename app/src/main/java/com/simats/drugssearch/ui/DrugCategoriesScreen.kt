@@ -31,7 +31,6 @@ private val CardBorderColor = Color(0xFFE2E8F0)
 // Drug Category data class
 data class DrugCategory(
     val name: String,
-    val drugCount: Int,
     val icon: ImageVector,
     val iconBg: Color,
     val iconTint: Color
@@ -50,42 +49,36 @@ fun DrugCategoriesScreen(
     val categories = listOf(
         DrugCategory(
             name = "Diabetes",
-            drugCount = 45,
             icon = Icons.Default.MonitorHeart,
             iconBg = Color(0xFFE3F2FD),
             iconTint = Color(0xFF1976D2)
         ),
         DrugCategory(
             name = "Cardiovascular",
-            drugCount = 67,
             icon = Icons.Default.Favorite,
             iconBg = Color(0xFFFCE4EC),
             iconTint = Color(0xFFC2185B)
         ),
         DrugCategory(
             name = "Pain Relief",
-            drugCount = 38,
             icon = Icons.Default.Shield,
             iconBg = Color(0xFFE8F5E9),
             iconTint = Color(0xFF388E3C)
         ),
         DrugCategory(
             name = "Antibiotics",
-            drugCount = 52,
             icon = Icons.Default.Medication,
             iconBg = Color(0xFFF3E5F5),
             iconTint = Color(0xFF7B1FA2)
         ),
         DrugCategory(
             name = "Vitamins &\nSupplements",
-            drugCount = 29,
             icon = Icons.Default.Vaccines,
             iconBg = Color(0xFFFFF8E1),
             iconTint = Color(0xFFF57C00)
         ),
         DrugCategory(
             name = "Allergy\n& Cold",
-            drugCount = 31,
             icon = Icons.Default.Shield,
             iconBg = Color(0xFFF5F5F5),
             iconTint = Color(0xFF616161)
@@ -230,17 +223,6 @@ private fun CategoryCard(
                 color = TextDarkColor,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                 lineHeight = 18.sp
-            )
-
-            Spacer(modifier = Modifier.height(6.dp))
-
-            // Drug Count
-            Text(
-                text = "${category.drugCount} drugs",
-                style = MaterialTheme.typography.bodySmall.copy(
-                    fontSize = 12.sp
-                ),
-                color = TextGrayColor
             )
         }
     }

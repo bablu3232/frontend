@@ -59,129 +59,45 @@ data class RiskItem(
     val recommendations: List<String>
 )
 
-// Normal ranges for risk calculation
-private val normalRanges = mapOf(
-    "Hemoglobin" to (12.0 to 17.5),
-    "WBC" to (4.5 to 11.0),
-    "Blood Glucose" to (70.0 to 99.0),
-    "Sodium" to (135.0 to 145.0),
-    "Total Cholesterol" to (0.0 to 200.0),
-    "HDL Cholesterol" to (40.0 to 999.0),
-    "LDL Cholesterol" to (0.0 to 100.0),
-    "Triglycerides" to (0.0 to 150.0),
-    "VLDL Cholesterol" to (5.0 to 40.0),
-    "T-Chol/HDL Ratio" to (3.3 to 5.0),
-    "LDL/HDL Ratio" to (1.0 to 3.6),
-    "Creatinine" to (0.6 to 1.3),
-    "eGFR" to (90.0 to 999.0),
-    "Glucose" to (70.0 to 99.0)
-)
-
-private fun isValueNormal(name: String, value: String): Boolean {
-    val numValue = value.toDoubleOrNull() ?: return true
-    val range = normalRanges[name] ?: return true
-    return numValue >= range.first && numValue <= range.second
-}
-
-private fun calculateOverallRisk(values: Map<String, String>): String {
-    val filteredValues = values.filter { it.value.isNotBlank() }
-    if (filteredValues.isEmpty()) return "Low"
+private fun calculateOverallRisk(analysis: com.simats.drugssearch.network.OcrResponse?): String {
+    val params = analysis?.parameters ?: return "Low"
+    if (params.isEmpty()) return "Low"
     
-    val normalCount = filteredValues.count { (key, value) -> isValueNormal(key, value) }
-    val percentage = (normalCount.toDouble() / filteredValues.size) * 100
+    // If any parameter has High risk level, overall is High
+    if (params.any { it.value.riskLevel == "High" }) return "High"
     
-    return when {
-        percentage >= 80 -> "Low"
-        percentage >= 50 -> "Moderate"
-        else -> "High"
-    }
+    // If any parameter has Moderate risk level, overall is Moderate
+    if (params.any { it.value.riskLevel == "Moderate" }) return "Moderate"
+    
+    return "Low"
 }
 
 private fun getRisksForCategory(
     categoryName: String,
-    values: Map<String, String>
+    analysis: com.simats.drugssearch.network.OcrResponse?
 ): List<RiskItem> {
-    return when (categoryName) {
-        "Blood Count" -> listOf(
+    val params = analysis?.parameters ?: return emptyList()
+    
+    // Show abnormal parameters in the risk summary
+    return params.filter { it.value.status != "Normal" }
+        .map { (name, detail) ->
             RiskItem(
-                label = "Anemia Risk",
-                level = if (isValueNormal("Hemoglobin", values["Hemoglobin"] ?: "")) "Low Risk" else "Moderate Risk",
-                explanation = "Your hemoglobin levels are ${if (isValueNormal("Hemoglobin", values["Hemoglobin"] ?: "")) "within normal range. No immediate concern for anemia." else "outside normal range. This may indicate anemia."}",
+                label = "$name Risk",
+                level = "${detail.riskLevel} Risk",
+                explanation = detail.summary?.takeIf { it.isNotBlank() } ?: detail.condition ?: "${detail.status} level of $name detected.",
                 recommendations = listOf(
-                    "Maintain balanced diet rich in iron",
-                    "Regular check-ups",
-                    "Stay hydrated"
-                )
-            ),
-            RiskItem(
-                label = "Infection Risk",
-                level = if (isValueNormal("WBC", values["WBC"] ?: "")) "Low Risk" else "Moderate Risk",
-                explanation = "Your white blood cell count is ${if (isValueNormal("WBC", values["WBC"] ?: "")) "within normal range. Your immune system is functioning well." else "outside normal range. Monitor for signs of infection."}",
-                recommendations = listOf(
-                    "Practice good hygiene",
-                    "Adequate sleep and rest",
-                    "Balanced nutrition"
+                    "Monitor your $name levels regularly",
+                    "Consult with your doctor regarding this result",
+                    "Maintain a healthy lifestyle and diet"
                 )
             )
-        )
-        "Metabolic Panel" -> listOf(
-            RiskItem(
-                label = "Diabetes Risk",
-                level = if (isValueNormal("Blood Glucose", values["Blood Glucose"] ?: "")) "Low Risk" else "Moderate Risk",
-                explanation = "Your blood glucose levels are ${if (isValueNormal("Blood Glucose", values["Blood Glucose"] ?: "")) "within normal range. Continue maintaining healthy habits." else "outside normal range. May indicate prediabetes or diabetes."}",
-                recommendations = listOf(
-                    "Monitor carbohydrate intake",
-                    "Regular physical activity",
-                    "Maintain healthy weight"
-                )
-            ),
-            RiskItem(
-                label = "Electrolyte Imbalance Risk",
-                level = if (isValueNormal("Sodium", values["Sodium"] ?: "")) "Low Risk" else "Moderate Risk",
-                explanation = "Your electrolyte levels are ${if (isValueNormal("Sodium", values["Sodium"] ?: "")) "balanced and within normal range." else "showing some imbalance. This needs monitoring."}",
-                recommendations = listOf(
-                    "Stay properly hydrated",
-                    "Balanced salt intake",
-                    "Monitor fluid intake"
-                )
-            )
-        )
-        "Lipid Profile" -> listOf(
-            RiskItem(
-                label = "Cardiovascular Risk",
-                level = if (isValueNormal("LDL Cholesterol", values["LDL Cholesterol"] ?: "") && 
-                           isValueNormal("Total Cholesterol", values["Total Cholesterol"] ?: "")) "Low Risk" else "Moderate Risk",
-                explanation = "Your cholesterol levels ${if (isValueNormal("LDL Cholesterol", values["LDL Cholesterol"] ?: "")) "are within healthy range. Your heart health is good." else "need attention. Elevated cholesterol increases cardiovascular risk."}",
-                recommendations = listOf(
-                    "Heart-healthy diet (low saturated fat)",
-                    "Regular cardiovascular exercise",
-                    "Maintain healthy weight",
-                    "Avoid smoking"
-                )
-            )
-        )
-        "Kidney Function" -> listOf(
-            RiskItem(
-                label = "Kidney Health Risk",
-                level = if (isValueNormal("Creatinine", values["Creatinine"] ?: "") && 
-                           isValueNormal("eGFR", values["eGFR"] ?: "")) "Low Risk" else "Moderate Risk",
-                explanation = "Your kidney function markers ${if (isValueNormal("Creatinine", values["Creatinine"] ?: "")) "are normal. Your kidneys are working well." else "show some abnormality. Kidney function needs monitoring."}",
-                recommendations = listOf(
-                    "Stay well hydrated",
-                    "Limit sodium intake",
-                    "Monitor blood pressure",
-                    "Avoid nephrotoxic medications"
-                )
-            )
-        )
-        else -> emptyList()
-    }
+        }
 }
 
 @Composable
 fun RiskSummaryScreen(
     categoryName: String = "Blood Count",
-    values: Map<String, String> = emptyMap(),
+    analysis: com.simats.drugssearch.network.OcrResponse? = null,
     onBackClick: () -> Unit = {},
     onHomeClick: () -> Unit = {},
     onBackToAnalysisClick: () -> Unit = {},
@@ -190,8 +106,8 @@ fun RiskSummaryScreen(
     onHistoryClick: () -> Unit = {},
     onProfileClick: () -> Unit = {}
 ) {
-    val overallRisk = calculateOverallRisk(values)
-    val risks = getRisksForCategory(categoryName, values)
+    val overallRisk = calculateOverallRisk(analysis)
+    val risks = getRisksForCategory(categoryName, analysis)
     
     val riskColor = when (overallRisk) {
         "Low" -> GreenColor
@@ -764,11 +680,7 @@ private fun RiskSummaryBottomNav(
 fun RiskSummaryScreenPreview() {
     DrugsSearchTheme {
         RiskSummaryScreen(
-            categoryName = "Blood Count",
-            values = mapOf(
-                "Hemoglobin" to "14.2",
-                "WBC" to "7500"
-            )
+            categoryName = "Blood Count"
         )
     }
 }

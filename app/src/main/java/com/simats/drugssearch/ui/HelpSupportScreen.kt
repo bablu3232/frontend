@@ -113,7 +113,7 @@ fun HelpSupportScreen(
                     SupportOptionCard(
                         icon = Icons.Default.Email,
                         title = "Email Us",
-                        subtitle = "support@healthcare.com",
+                        subtitle = "support@drugssearch.com",
                         color = Color(0xFFE3F2FD), // Light Blue
                         iconTint = Color(0xFF2196F3),
                         onClick = onEmailClick

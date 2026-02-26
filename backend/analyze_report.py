@@ -40,6 +40,11 @@ def analyze(input_json):
         data = json.loads(input_json)
         input_category = data.get("category", "General")
         input_parameters = data.get("parameters", [])
+        patient_details = data.get("patient_details", {
+            "name": "",
+            "age": "",
+            "gender": ""
+        })
         
         lab_parameters = get_db_parameters()
         log_debug(f"Fetched {len(lab_parameters)} DB parameters")
@@ -74,34 +79,44 @@ def analyze(input_json):
                 min_val = float(db_param['min_value'])
                 max_val = float(db_param['max_value'])
                 
+                deviation = 0.0
+                risk_level = "None"
+
                 if value < min_val:
                     status = "Low"
+                    deviation = ((min_val - value) / min_val) * 100
                     condition = db_param['condition_if_abnormal'] or "Low Level"
                 elif value > max_val:
                     status = "High"
+                    deviation = ((value - max_val) / max_val) * 100
                     condition = db_param['condition_if_abnormal'] or "High Level"
                 
                 # Add recommendation info if abnormal
                 if status != "Normal":
+                     risk_level = "High" if deviation > 15 else "Moderate"
                      recommendation = {
                          "category": db_param['drug_category'],
                          "drugs": db_param['example_drugs']
                      }
-            else:
-                log_debug(f"Parameter not found in DB: {name}")
 
-            detected_parameters[name] = {
-                "value": value,
-                "unit": db_param['unit'] if db_param else "",
-                "status": status,
-                "category": db_param['category'] if db_param else input_category,
-                "condition": condition,
-                "recommendation": recommendation               
-            }
+                detected_parameters[name] = {
+                    "value": value,
+                    "unit": db_param['unit'],
+                    "status": status,
+                    "risk_level": risk_level,
+                    "deviation": round(deviation, 1),
+                    "category": db_param['category'] if db_param['category'] else input_category,
+                    "condition": condition,
+                    "recommendation": recommendation,
+                    "summary": db_param['summary'] if 'summary' in db_param else ""
+                }
+            else:
+                log_debug(f"Parameter not found in DB: {name} - Skipping.")
 
         output = {
             "report_category": input_category,
-            "parameters": detected_parameters
+            "parameters": detected_parameters,
+            "patient_details": patient_details
         }
         
         json_output = json.dumps(output)

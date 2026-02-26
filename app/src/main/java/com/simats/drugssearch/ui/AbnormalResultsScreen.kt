@@ -82,12 +82,7 @@ private val normalRangesWithUnits = mapOf(
     "Glucose" to Triple(70.0 to 99.0, "mg/dL", "70-99 mg/dL")
 )
 
-private fun isValueNormal(name: String, value: String): Boolean {
-    val numValue = value.toDoubleOrNull() ?: return true
-    val rangeData = normalRangesWithUnits[name] ?: return true
-    val range = rangeData.first
-    return numValue >= range.first && numValue <= range.second
-}
+
 
 private fun getUnit(name: String): String {
     return normalRangesWithUnits[name]?.second ?: ""
@@ -135,7 +130,7 @@ private fun getSeverityBgColor(severity: String): Color {
 @Composable
 fun AbnormalResultsScreen(
     categoryName: String = "Blood Count",
-    values: Map<String, String> = emptyMap(),
+    analysis: com.simats.drugssearch.network.OcrResponse? = null,
     onBackClick: () -> Unit = {},
     onHomeClick: () -> Unit = {},
     onParameterClick: (String) -> Unit = {},
@@ -145,9 +140,10 @@ fun AbnormalResultsScreen(
     onHistoryClick: () -> Unit = {},
     onProfileClick: () -> Unit = {}
 ) {
-    // Filter to get only abnormal values
-    val abnormalValues = values.filter { (key, value) ->
-        value.isNotBlank() && !isValueNormal(key, value)
+    // Filter to get only abnormal values from backend analysis
+    val parameters = analysis?.parameters ?: emptyMap()
+    val abnormalValues = parameters.filter { (_, details) ->
+        details.status != "Normal"
     }
     val abnormalCount = abnormalValues.size
 
@@ -239,12 +235,14 @@ fun AbnormalResultsScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Abnormal Parameter Cards
-                abnormalValues.forEach { (name, value) ->
-                    val severity = getSeverity(name, value)
+                abnormalValues.forEach { (name, details) ->
+                    val displayValue = details.value?.toString() ?: ""
+                    val displayUnit = details.unit ?: getUnit(name)
+                    val severity = getSeverity(name, displayValue)
                     AbnormalParameterCard(
                         parameterName = name,
-                        yourValue = value,
-                        unit = getUnit(name),
+                        yourValue = displayValue,
+                        unit = displayUnit,
                         normalRange = getNormalRangeDisplay(name),
                         severity = severity,
                         onClick = { onParameterClick(name) }
@@ -655,10 +653,7 @@ fun AbnormalResultsScreenPreview() {
     DrugsSearchTheme {
         AbnormalResultsScreen(
             categoryName = "Blood Count",
-            values = mapOf(
-                "Hemoglobin" to "14.2",
-                "Hematocrit" to "35"
-            )
+            analysis = null
         )
     }
 }

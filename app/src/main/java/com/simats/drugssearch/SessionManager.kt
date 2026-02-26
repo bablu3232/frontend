@@ -16,6 +16,8 @@ class SessionManager(context: Context) {
         private const val KEY_DOB = "dob"
         private const val KEY_GENDER = "gender"
         private const val KEY_IS_LOGGED_IN = "is_logged_in"
+        private const val KEY_BIOMETRIC_ENABLED = "biometric_enabled"
+        private const val KEY_TWO_FACTOR_ENABLED = "two_factor_enabled"
     }
 
     fun saveSession(
@@ -46,6 +48,16 @@ class SessionManager(context: Context) {
     fun getPhone(): String = prefs.getString(KEY_PHONE, "") ?: ""
     fun getDob(): String = prefs.getString(KEY_DOB, "") ?: ""
     fun getGender(): String = prefs.getString(KEY_GENDER, "") ?: ""
+
+    fun isBiometricEnabled(): Boolean = prefs.getBoolean(KEY_BIOMETRIC_ENABLED, false)
+    fun setBiometricEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_BIOMETRIC_ENABLED, enabled).apply()
+    }
+
+    fun isTwoFactorEnabled(): Boolean = prefs.getBoolean(KEY_TWO_FACTOR_ENABLED, false)
+    fun setTwoFactorEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_TWO_FACTOR_ENABLED, enabled).apply()
+    }
 
     fun clearSession() {
         prefs.edit().clear().apply()

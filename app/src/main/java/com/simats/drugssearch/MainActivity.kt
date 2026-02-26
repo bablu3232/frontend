@@ -1,6 +1,8 @@
 package com.simats.drugssearch
 
 import android.os.Bundle
+import android.content.Intent
+import android.net.Uri
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Box
@@ -18,8 +20,12 @@ import com.simats.drugssearch.network.ReportParameter
 import com.simats.drugssearch.network.Drug
 import kotlinx.coroutines.launch
 import androidx.compose.ui.platform.LocalContext
+import androidx.biometric.BiometricPrompt
+import androidx.biometric.BiometricManager
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.FragmentActivity
 
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -80,10 +86,61 @@ enum class Screen {
 @Composable
 fun AppNavigation() {
     val context = LocalContext.current
+    val activity = context as? FragmentActivity
     val sessionManager = remember { SessionManager(context) }
 
     var currentScreen by remember { mutableStateOf(Screen.Splash) }
     var previousScreen by remember { mutableStateOf<Screen?>(null) }
+    
+    // Biometric prompt logic
+    fun showBiometricPrompt(
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        if (activity == null) return
+        
+        val executor = ContextCompat.getMainExecutor(activity)
+        val biometricPrompt = BiometricPrompt(activity, executor,
+            object : BiometricPrompt.AuthenticationCallback() {
+                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                    super.onAuthenticationSucceeded(result)
+                    onSuccess()
+                }
+
+                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                    super.onAuthenticationError(errorCode, errString)
+                    onError(errString.toString())
+                }
+            })
+
+        val promptInfo = BiometricPrompt.PromptInfo.Builder()
+            .setTitle("Biometric Login")
+            .setSubtitle("Log in using your biometric credential")
+            .setNegativeButtonText("Use Password")
+            .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG)
+            .build()
+
+        biometricPrompt.authenticate(promptInfo)
+    }
+
+    // Check biometric on splash complete
+    fun handleSplashComplete() {
+        if (sessionManager.isLoggedIn() && sessionManager.isBiometricEnabled()) {
+            val biometricManager = BiometricManager.from(context)
+            if (biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG) == BiometricManager.BIOMETRIC_SUCCESS) {
+                showBiometricPrompt(
+                    onSuccess = { currentScreen = Screen.Dashboard },
+                    onError = { currentScreen = Screen.Login }
+                )
+            } else {
+                currentScreen = Screen.Dashboard
+            }
+        } else if (sessionManager.isLoggedIn()) {
+            currentScreen = Screen.Dashboard
+        } else {
+            currentScreen = Screen.Welcome
+        }
+    }
     
     // User Session — initialize from saved session if available
     var userEmail by remember { mutableStateOf(sessionManager.getEmail()) }
@@ -96,6 +153,7 @@ fun AppNavigation() {
     // Upload & Report State
     var selectedCategory by remember { mutableStateOf("") }
     var reviewValuesMap by remember { mutableStateOf(mapOf<String, String>()) }
+    var currentAnalysis by remember { mutableStateOf<com.simats.drugssearch.network.OcrResponse?>(null) }
     
     // Category Specific State Values
     var bloodCountValues by remember { mutableStateOf(BloodCountValues()) }
@@ -205,11 +263,7 @@ fun AppNavigation() {
 
     when (currentScreen) {
         Screen.Splash -> SplashScreen(onSplashComplete = {
-            if (sessionManager.isLoggedIn()) {
-                currentScreen = Screen.Dashboard
-            } else {
-                currentScreen = Screen.Welcome
-            }
+            handleSplashComplete()
         })
         
         Screen.Welcome -> WelcomeScreen(
@@ -432,9 +486,11 @@ fun AppNavigation() {
                                     }
                                     // Update Global State
                                     drugRecommendations = newRecommendations
+                                    currentAnalysis = analysis
                                 } else {
                                      // Clear recommendations if analysis failed or returned nothing
                                      drugRecommendations = emptyList()
+                                     currentAnalysis = null
                                 }
                                 
                                 currentScreen = Screen.ReportAnalysis
@@ -460,6 +516,7 @@ fun AppNavigation() {
             onCategorySelected = { category -> 
                 // Reset state for new entry
                 drugRecommendations = emptyList()
+                currentAnalysis = null
                 currentReportId = null
                 currentPatientDetails = null
                 currentRemarks = ""
@@ -566,7 +623,7 @@ fun AppNavigation() {
         
         Screen.ReportAnalysis -> ReportAnalysisScreen(
              categoryName = selectedCategory,
-             values = valuesForReview,
+             analysis = currentAnalysis,
              onBackClick = { currentScreen = Screen.ReviewValues },
              onHomeClick = { currentScreen = Screen.Dashboard },
              onViewNormalResultsClick = { currentScreen = Screen.NormalResults },
@@ -580,7 +637,7 @@ fun AppNavigation() {
 
         Screen.NormalResults -> NormalResultsScreen(
             categoryName = selectedCategory,
-            values = valuesForReview,
+            analysis = currentAnalysis,
             onBackClick = { currentScreen = Screen.ReportAnalysis },
             onHomeClick = { currentScreen = Screen.Dashboard },
             onBackToAnalysisClick = { currentScreen = Screen.ReportAnalysis },
@@ -591,7 +648,7 @@ fun AppNavigation() {
 
         Screen.AbnormalResults -> AbnormalResultsScreen(
             categoryName = selectedCategory,
-            values = valuesForReview,
+            analysis = currentAnalysis,
             onBackClick = { currentScreen = Screen.ReportAnalysis },
             onHomeClick = { currentScreen = Screen.Dashboard },
             onBackToAnalysisClick = { currentScreen = Screen.ReportAnalysis },
@@ -603,7 +660,7 @@ fun AppNavigation() {
 
         Screen.RiskSummary -> RiskSummaryScreen(
             categoryName = selectedCategory,
-            values = valuesForReview,
+            analysis = currentAnalysis,
             onBackClick = { currentScreen = Screen.ReportAnalysis },
             onHomeClick = { currentScreen = Screen.Dashboard },
             onBackToAnalysisClick = { currentScreen = Screen.ReportAnalysis },
@@ -689,6 +746,7 @@ fun AppNavigation() {
             onHomeClick = { currentScreen = Screen.Dashboard },
             onSearchClick = { query -> 
                 searchQuery = query
+                previousScreen = Screen.SearchDrugInformation
                 scope.launch {
                     try {
                         val response = com.simats.drugssearch.network.RetrofitClient.instance.searchDrugs(query)
@@ -707,6 +765,7 @@ fun AppNavigation() {
             },
             onPopularDrugClick = { drugName ->
                   searchQuery = drugName
+                  previousScreen = Screen.SearchDrugInformation
                   scope.launch {
                     try {
                        val response = com.simats.drugssearch.network.RetrofitClient.instance.searchDrugs(drugName)
@@ -733,7 +792,7 @@ fun AppNavigation() {
         Screen.SearchResults -> SearchResultsScreen(
             searchQuery = searchQuery,
             drugs = searchResults,
-            onBackClick = { currentScreen = Screen.SearchDrugInformation },
+            onBackClick = { currentScreen = previousScreen ?: Screen.SearchDrugInformation },
             onHomeClick = { currentScreen = Screen.Dashboard },
             onDrugClick = { drug -> 
                 selectedDrug = drug
@@ -837,7 +896,17 @@ fun AppNavigation() {
             onProfileClick = { currentScreen = Screen.Profile },
             onUploadClick = { currentScreen = Screen.Upload },
             onSearchClick = { currentScreen = Screen.SearchDrugInformation },
-            onHistoryClick = { currentScreen = Screen.ReportHistory }
+            onHistoryClick = { currentScreen = Screen.ReportHistory },
+            onLogoutClick = {
+                sessionManager.clearSession()
+                loggedInUserId = null
+                loggedInUserName = ""
+                userEmail = ""
+                userPhone = ""
+                userDob = ""
+                userGender = ""
+                currentScreen = Screen.Welcome
+            }
         )
 
         Screen.DrugCategories -> DrugCategoriesScreen(
@@ -845,10 +914,15 @@ fun AppNavigation() {
             onHomeClick = { currentScreen = Screen.Dashboard },
             onCategoryClick = { category ->
                 val cleanCategoryName = category.name.replace("\n", " ").trim()
-                searchQuery = cleanCategoryName
+                
+                searchQuery = cleanCategoryName // Keep the UI label as selected
+                previousScreen = Screen.DrugCategories
                 scope.launch {
                     try {
-                        val response = com.simats.drugssearch.network.RetrofitClient.instance.searchDrugs(cleanCategoryName)
+                        val response = com.simats.drugssearch.network.RetrofitClient.instance.searchDrugs(
+                            query = cleanCategoryName,
+                            category = cleanCategoryName
+                        )
                         if (response.isSuccessful) {
                             searchResults = response.body() ?: emptyList()
                             currentScreen = Screen.SearchResults
@@ -891,7 +965,20 @@ fun AppNavigation() {
             onBackClick = { currentScreen = Screen.Profile },
             onHomeClick = { currentScreen = Screen.Dashboard },
             onFaqClick = { currentScreen = Screen.FAQ },
-            onAboutClick = { currentScreen = Screen.AboutApp }
+            onAboutClick = { currentScreen = Screen.AboutApp },
+            onCallClick = { 
+                val intent = Intent(Intent.ACTION_DIAL).apply {
+                    data = Uri.parse("tel:1-800-432-584")
+                }
+                context.startActivity(intent)
+            },
+            onEmailClick = {
+                val intent = Intent(Intent.ACTION_SENDTO).apply {
+                    data = Uri.parse("mailto:support@drugssearch.com")
+                    putExtra(Intent.EXTRA_SUBJECT, "Support Request - DrugsSearch")
+                }
+                context.startActivity(intent)
+            }
         )
 
         Screen.FAQ -> FAQScreen(

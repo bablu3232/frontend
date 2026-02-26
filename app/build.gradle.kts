@@ -56,8 +56,14 @@ dependencies {
     // Retrofit (API calls)
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    // OkHttp (for Multipart requests)
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
 // Coroutines (background tasks)
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 // ViewModel for Compose
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4")
+// Biometric (Fingerprint/Face login)
+    implementation("androidx.biometric:biometric:1.1.0")
+// Fix FilePicker crash resulting from biometric fragment usage
+    implementation("androidx.fragment:fragment-ktx:1.8.5")
 }

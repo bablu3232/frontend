@@ -76,12 +76,7 @@ private val normalRangesWithUnits = mapOf(
     "Glucose" to Triple(70.0 to 99.0, "mg/dL", "70-99 mg/dL")
 )
 
-private fun isValueNormal(name: String, value: String): Boolean {
-    val numValue = value.toDoubleOrNull() ?: return true
-    val rangeData = normalRangesWithUnits[name] ?: return true
-    val range = rangeData.first
-    return numValue >= range.first && numValue <= range.second
-}
+
 
 private fun getUnit(name: String): String {
     return normalRangesWithUnits[name]?.second ?: ""
@@ -94,7 +89,7 @@ private fun getNormalRangeDisplay(name: String): String {
 @Composable
 fun NormalResultsScreen(
     categoryName: String = "Blood Count",
-    values: Map<String, String> = emptyMap(),
+    analysis: com.simats.drugssearch.network.OcrResponse? = null,
     onBackClick: () -> Unit = {},
     onHomeClick: () -> Unit = {},
     onParameterClick: (String) -> Unit = {},
@@ -103,9 +98,10 @@ fun NormalResultsScreen(
     onHistoryClick: () -> Unit = {},
     onProfileClick: () -> Unit = {}
 ) {
-    // Filter to get only normal values
-    val normalValues = values.filter { (key, value) ->
-        value.isNotBlank() && isValueNormal(key, value)
+    // Filter to get only normal values from backend analysis
+    val parameters = analysis?.parameters ?: emptyMap()
+    val normalValues = parameters.filter { (_, details) ->
+        details.status == "Normal"
     }
     val normalCount = normalValues.size
 
@@ -188,11 +184,13 @@ fun NormalResultsScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Parameter Cards
-                normalValues.forEach { (name, value) ->
+                normalValues.forEach { (name, details) ->
+                    val displayValue = details.value?.toString() ?: ""
+                    val displayUnit = details.unit ?: getUnit(name)
                     NormalParameterCard(
                         parameterName = name,
-                        yourValue = value,
-                        unit = getUnit(name),
+                        yourValue = displayValue,
+                        unit = displayUnit,
                         normalRange = getNormalRangeDisplay(name),
                         onClick = { onParameterClick(name) }
                     )
@@ -545,12 +543,7 @@ fun NormalResultsScreenPreview() {
     DrugsSearchTheme {
         NormalResultsScreen(
             categoryName = "Blood Count",
-            values = mapOf(
-                "Hemoglobin" to "14.2",
-                "WBC" to "7500",
-                "RBC" to "4.8",
-                "Platelets" to "250000"
-            )
+            analysis = null
         )
     }
 }

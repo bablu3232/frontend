@@ -49,7 +49,16 @@ interface ApiService {
     suspend fun getUserReports(@Query("user_id") userId: Int): Response<List<UserReport>>
 
     @GET("search_drugs.php")
-    suspend fun searchDrugs(@Query("query") query: String): Response<List<Drug>>
+    suspend fun searchDrugs(
+        @Query("query") query: String,
+        @Query("category") category: String? = null
+    ): Response<List<Drug>>
+
+    @POST("update_security.php")
+    suspend fun updateSecurity(@Body request: Map<String, Any>): Response<CommonResponse>
+
+    @POST("delete_account.php")
+    suspend fun deleteAccount(@Body request: Map<String, Int>): Response<CommonResponse>
 }
 
 // RegisterRequest, RegisterResponse, LoginRequest, LoginResponse, UploadResponse are in Models.kt

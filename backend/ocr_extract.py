@@ -6,6 +6,7 @@ import json
 import numpy as np
 import mysql.connector
 from pdf2image import convert_from_path
+import concurrent.futures
 
 # Tesseract path (Windows)
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
@@ -153,6 +154,28 @@ PARAMETER_ALIASES = {
     "hemoglobin": "Hemoglobin",
     "hb": "Hemoglobin",
     "hgb": "Hemoglobin",
+    # Liver Function Tests
+    "sgpt": "ALT (SGPT)",
+    "alt (sgpt": "ALT (SGPT)",
+    "alt": "ALT (SGPT)",
+    "ast": "AST (SGOT)",
+    "sgot": "AST (SGOT)",
+    "ast (sgot": "AST (SGOT)",
+    "alp": "Alkaline Phosphatase (ALP)",
+    "alkaline phosphatase (alp": "Alkaline Phosphatase (ALP)",
+    "alkaline phosphatase": "Alkaline Phosphatase (ALP)",
+    "bilirubin total": "Bilirubin Total",
+    "total bilirubin": "Bilirubin Total",
+    "bilirubin direct": "Bilirubin Direct",
+    "direct bilirubin": "Bilirubin Direct",
+    "bilirubin indirect": "Bilirubin Indirect",
+    "indirect bilirubin": "Bilirubin Indirect",
+    "total protein": "Total Protein",
+    "protein total": "Total Protein",
+    "albumin": "Albumin",
+    "globulin": "Globulin",
+    "ag ratio": "A/G Ratio",
+    "a/g ratio": "A/G Ratio",
     # CBC / Blood Count
     "total count": "Total Count",
     "total wbc count": "Total Count",
@@ -238,7 +261,8 @@ def resolve_alias(name):
 # -------------------------------
 def preprocess_enhanced(img):
     """Enhanced preprocessing for borderless/tabular reports."""
-    img = cv2.resize(img, None, fx=3, fy=3, interpolation=cv2.INTER_CUBIC)
+    # Resize slightly less (2.2x instead of 3x) for speed while keeping accuracy
+    img = cv2.resize(img, None, fx=2.2, fy=2.2, interpolation=cv2.INTER_CUBIC)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     gray = cv2.bilateralFilter(gray, 9, 75, 75)
     kernel = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])
@@ -246,24 +270,33 @@ def preprocess_enhanced(img):
     _, gray = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
     return gray
 
-def multi_pass_ocr(img):
-    """Run OCR with 3 different preprocessing/config combos, return combined text."""
-    # Pass A: Enhanced (best for borderless reports)
-    processed_a = preprocess_enhanced(img)
-    text_a = pytesseract.image_to_string(processed_a, config='--psm 4')
+def run_single_ocr(img, config):
+    """Helper for parallelizing image_to_string."""
+    return pytesseract.image_to_string(img, config=config)
 
-    # Pass B: 2x resize + grayscale + psm 6 (best for bordered tables)
+def multi_pass_ocr(img):
+    """Run OCR with 3 different preprocessing/config combos in parallel for speed."""
+    # Prepare all 3 processed images first
+    processed_a = preprocess_enhanced(img)
+    
     img_b = cv2.resize(img, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
     gray_b = cv2.cvtColor(img_b, cv2.COLOR_BGR2GRAY)
-    text_b = pytesseract.image_to_string(gray_b, config='--psm 6')
-
-    # Pass C: 2x resize + sharpen + Otsu + psm 3 (auto layout detection)
+    
     kernel = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])
     gray_c = cv2.filter2D(gray_b.copy(), -1, kernel)
     _, gray_c = cv2.threshold(gray_c, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    text_c = pytesseract.image_to_string(gray_c, config='--psm 3')
 
-    # Combine all outputs — parameter extraction will find matches from any
+    # Run Tesseract in parallel threads (each thread handles one pass)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+        future_a = executor.submit(run_single_ocr, processed_a, '--psm 4')
+        future_b = executor.submit(run_single_ocr, gray_b, '--psm 6')
+        future_c = executor.submit(run_single_ocr, gray_c, '--psm 3')
+        
+        text_a = future_a.result()
+        text_b = future_b.result()
+        text_c = future_c.result()
+
+    # Combine all outputs
     return text_a + "\n" + text_b + "\n" + text_c
 
 def extract_text_from_image(image_path):
@@ -283,9 +316,11 @@ def extract_text_from_pdf(pdf_path):
         for page in pages:
             img = np.array(page)
             img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-            text += dual_pass_ocr(img)
+            text += multi_pass_ocr(img)
         return text
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return ""
 
 # -------------------------------
@@ -314,6 +349,9 @@ def normalize_ocr_text(text):
     return text
 
 raw_text = normalize_ocr_text(raw_text)
+
+with open("ocr_debug.txt", "w", encoding="utf-8") as f:
+    f.write(raw_text)
 
 # -------------------------------
 # PATIENT DETAILS EXTRACTION
@@ -419,17 +457,23 @@ def try_add_parameter(canonical_name, value, db_param):
     max_val = float(db_param['max_value'])
 
     status = "Normal"
+    risk_level = "None"
+    deviation = 0.0
     condition = ""
     recommendation = {}
 
     if val < min_val:
         status = "Low"
+        deviation = ((min_val - val) / min_val) * 100
         condition = db_param['condition_if_abnormal'] or "Low Level"
     elif val > max_val:
         status = "High"
+        deviation = ((val - max_val) / max_val) * 100
         condition = db_param['condition_if_abnormal'] or "High Level"
 
     if status != "Normal":
+        # Risk Logic: High if deviation > 15%, else Moderate
+        risk_level = "High" if deviation > 15 else "Moderate"
         recommendation = {
             "category": db_param['drug_category'],
             "drugs": db_param['example_drugs']
@@ -439,32 +483,17 @@ def try_add_parameter(canonical_name, value, db_param):
         "value": val,
         "unit": db_param['unit'],
         "status": status,
+        "risk_level": risk_level,
+        "deviation": round(deviation, 1),
         "category": db_param['category'],
         "condition": condition,
-        "recommendation": recommendation
+        "recommendation": recommendation,
+        "summary": db_param['summary'] if 'summary' in db_param else ""
     }
     found_param_names.add(canonical_name.lower())
 
     if db_param['category']:
         category_scores[db_param['category']] = category_scores.get(db_param['category'], 0) + 1
-
-def add_generic_parameter(canonical_name, value_str):
-    """Add a parameter that isn't in the DB, with Unknown status."""
-    if canonical_name.lower() in found_param_names:
-        return
-    try:
-        val = float(value_str)
-    except (ValueError, TypeError):
-        return
-    detected_parameters[canonical_name] = {
-        "value": val,
-        "unit": "",
-        "status": "Unknown",
-        "category": "General",
-        "condition": "",
-        "recommendation": None
-    }
-    found_param_names.add(canonical_name.lower())
 
 
 # =============================================
@@ -478,8 +507,8 @@ SKIP_PATTERNS = re.compile(
     r'(?:^(?:TEST|INVESTIGATION|PARAMETER|TES\?|RESULT|VALUE)\b|'
     r'(?:REFERENCE\s+(?:VALUE|RANGE|VALOR))|'
     r'(?:Test\s*Descript)|'
-    r'(?:Pt\.?\s*N(?:ame|ae)|Patient\s*Name)\s*[:\-]|'
-    r'(?:Age|Gender|Sex|Date)\s*[:\-]|'
+    r'(?:Pt\.?\s*N(?:ame|ae)|Patient\s*Name|PID|UHID|Reg\.?\s*No|Registered\s*on)\s*[:\-]?|'
+    r'(?:Age|Gender|Sex|Date|Generated\s*on)\s*[:\-]?|'
     r'(?:Ref\s*\.?\s*(?:No|by))|'
     r'(?:Sample|Collected|Reported|Received|SID|STD|Visit|Specimen|Doctor|Name)\s*[:\-\s]|'
     r'(?:BIO\s*CHEMISTRY|LIPID\s*PROFILE|HAEMATOLOGY|BLOOD\s*COUNT|CBC|RA\s*Factor\s*:)\s*:?\s*$|'
@@ -489,8 +518,8 @@ SKIP_PATTERNS = re.compile(
     r'(?:Dr\.|M\.D|Pathology|Celt|Technician|Incharge|MR\.?No|MRO|OP\d)|'
     r'(?:Making\s*lives|Opp\.?\s*to|Collector|LAB\s*REPORT|MULTISPECIAL)|'
     r'(?:ATTACHED|ACBI|CMC|EXTERNAL|QUALITY|CONTROL|ASSESMENT|SCHEME|REG)|'
-    r'(?:Please\s*Bring|next\s*visit|Report\s*during)|'
-    r'(?:RARAGIOR|FesDescipion|sampke|sampleDste|Spectnee|Rasus|efesnss))',
+    r'(?:Please\s*Bring|next\s*visit|Report\s*during|E\s*\-|LP\b)|'
+    r'(?:RARAGIOR|FesDescipion|sampke|sampleDste|Spectnee|Rasus|efesnss|Potassium\s+A\b))',
     re.IGNORECASE
 )
 
@@ -537,8 +566,16 @@ for line in lines:
     # Skip names that contain 'upto', 'date', 'sample', 'visit' — likely garbage
     if re.search(r'(?:upto|date|sample|visit|reference|range|result|report)', param_name_raw, re.IGNORECASE):
         continue
+    # Fix mismatched closing braces before stripping
+    if param_name_raw.endswith('}') and '(' in param_name_raw and ')' not in param_name_raw:
+        param_name_raw = param_name_raw[:-1] + ')'
+    elif param_name_raw.endswith(']') and '[' in param_name_raw and ']' not in param_name_raw:
+        param_name_raw = param_name_raw[:-1] + ']'
+        
     # Skip names ending in single junk chars from OCR artifacts
-    param_name_raw = re.sub(r'\s+[a-z!|]$', '', param_name_raw, flags=re.IGNORECASE).strip()
+    param_name_raw = re.sub(r'[\s|!}\]]+$', '', param_name_raw).strip()
+    param_name_raw = re.sub(r'^[\s|!{\[]+', '', param_name_raw).strip()
+    
     if len(param_name_raw) < 2:
         continue
 
@@ -553,8 +590,6 @@ for line in lines:
     db_param = param_lookup.get(canonical_name.lower())
     if db_param:
         try_add_parameter(canonical_name, value_str, db_param)
-    else:
-        add_generic_parameter(canonical_name, value_str)
 
 
 # =============================================
@@ -572,8 +607,6 @@ for alias, canonical_name in PARAMETER_ALIASES.items():
         db_param = param_lookup.get(canonical_name.lower())
         if db_param:
             try_add_parameter(canonical_name, value_str, db_param)
-        else:
-            add_generic_parameter(canonical_name, value_str)
 
 
 # =============================================

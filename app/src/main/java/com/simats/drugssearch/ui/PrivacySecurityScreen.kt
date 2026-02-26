@@ -21,9 +21,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.simats.drugssearch.ui.theme.DrugsSearchTheme
+import com.simats.drugssearch.SessionManager
+import kotlinx.coroutines.launch
 
 // Colors
 private val PrimaryBlue = Color(0xFF2196F3)
@@ -46,7 +49,8 @@ fun PrivacySecurityScreen(
     onProfileClick: () -> Unit = {},
     onUploadClick: () -> Unit = {},
     onSearchClick: () -> Unit = {},
-    onHistoryClick: () -> Unit = {}
+    onHistoryClick: () -> Unit = {},
+    onLogoutClick: () -> Unit = {}
 ) {
     Scaffold(
         bottomBar = {
@@ -100,30 +104,91 @@ fun PrivacySecurityScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Two-Factor Authentication
-                var isTwoFactorEnabled by remember { mutableStateOf(false) }
-                SecurityToggleItem(
-                    icon = Icons.Outlined.Security,
-                    title = "Two-Factor Authentication",
-                    subtitle = if (isTwoFactorEnabled) "Enabled" else "Not enabled",
-                    iconBackgroundColor = LightGreenBg,
-                    iconTint = GreenColor,
-                    isChecked = isTwoFactorEnabled,
-                    onCheckedChange = { isTwoFactorEnabled = it }
-                )
+                Spacer(modifier = Modifier.height(16.dp))
                 
+                // Account Deletion
+                val context = LocalContext.current
+                val sessionManager = remember { SessionManager(context) }
+                val scope = rememberCoroutineScope()
+                var showDeleteDialog by remember { mutableStateOf(false) }
+
+                SecurityMenuItem(
+                    icon = Icons.Outlined.Lock,
+                    title = "Delete Account",
+                    iconBackgroundColor = Color(0xFFFFEBEE), // Light red
+                    iconTint = Color.Red,
+                    onClick = { showDeleteDialog = true }
+                )
+
+                if (showDeleteDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showDeleteDialog = false },
+                        title = { Text("Delete Account") },
+                        text = { Text("Are you sure you want to delete your account? This action is permanent and will delete all your health reports.") },
+                        confirmButton = {
+                            TextButton(
+                                onClick = {
+                                    val userId = sessionManager.getUserId()
+                                    if (userId != -1) {
+                                        scope.launch {
+                                            try {
+                                                val response = com.simats.drugssearch.network.RetrofitClient.instance.deleteAccount(mapOf("user_id" to userId))
+                                                if (response.isSuccessful) {
+                                                    sessionManager.clearSession()
+                                                    onLogoutClick() // Triggers navigation back to Welcome
+                                                }
+                                            } catch (e: Exception) {
+                                                e.printStackTrace()
+                                            }
+                                        }
+                                    }
+                                    showDeleteDialog = false
+                                },
+                                colors = ButtonDefaults.textButtonColors(contentColor = Color.Red)
+                            ) {
+                                Text("Delete")
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showDeleteDialog = false }) {
+                                Text("Cancel")
+                            }
+                        }
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(16.dp))
 
-                 // Biometric Login (Optional but good for filling space and consistent with 'Security')
-                 var isBiometricEnabled by remember { mutableStateOf(false) }
-                 SecurityToggleItem(
+                // Biometric Login
+                var isBiometricEnabled by remember { mutableStateOf(sessionManager.isBiometricEnabled()) }
+                
+                SecurityToggleItem(
                     icon = Icons.Outlined.Lock,
                     title = "Biometric Login",
-                    subtitle = null,
+                    subtitle = if (isBiometricEnabled) "Enabled" else "Not enabled",
                     iconBackgroundColor = LightPurpleBg,
                     iconTint = PurpleColor,
                     isChecked = isBiometricEnabled,
-                    onCheckedChange = { isBiometricEnabled = it }
+                    onCheckedChange = { checked ->
+                        isBiometricEnabled = checked
+                        sessionManager.setBiometricEnabled(checked)
+                        
+                        // Update backend
+                        val userId = sessionManager.getUserId()
+                        if (userId != -1) {
+                            scope.launch {
+                                try {
+                                    val req = mapOf(
+                                        "user_id" to userId,
+                                        "biometric_enabled" to if (checked) 1 else 0
+                                    )
+                                    com.simats.drugssearch.network.RetrofitClient.instance.updateSecurity(req)
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
+                            }
+                        }
+                    }
                 )
             }
         }

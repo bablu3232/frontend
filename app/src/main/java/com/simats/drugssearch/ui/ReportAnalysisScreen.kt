@@ -54,42 +54,7 @@ private val GreenBg = Color(0xFFDCFCE7)
 private val RedColor = Color(0xFFEF4444)
 private val RedBg = Color(0xFFFEE2E2)
 
-// Normal ranges for each category
-private val normalRanges = mapOf(
-    // Blood Count
-    "Hemoglobin" to (12.0 to 17.5),
-    "WBC" to (4.5 to 11.0),
-    "RBC" to (4.5 to 5.5),
-    "Platelets" to (150.0 to 400.0),
-    "Hematocrit" to (36.0 to 50.0),
-    // Metabolic Panel
-    "Blood Glucose" to (70.0 to 99.0),
-    "Sodium" to (135.0 to 145.0),
-    "Potassium" to (3.5 to 5.0),
-    "Calcium" to (8.6 to 10.2),
-    "Bicarbonate" to (22.0 to 29.0),
-    // Lipid Profile
-    "Total Cholesterol" to (0.0 to 200.0),
-    "HDL Cholesterol" to (40.0 to 999.0),
-    "LDL Cholesterol" to (0.0 to 100.0),
-    "Triglycerides" to (0.0 to 150.0),
-    "VLDL Cholesterol" to (5.0 to 40.0),
-    "T-Chol/HDL Ratio" to (3.3 to 5.0),
-    "LDL/HDL Ratio" to (1.0 to 3.6),
-    // Kidney Function
-    "Creatinine" to (0.6 to 1.3),
-    "BUN" to (7.0 to 20.0),
-    "eGFR" to (90.0 to 999.0),
-    "Uric Acid" to (2.4 to 7.0),
-    // Aliases (same ranges under different names)
-    "Glucose" to (70.0 to 99.0)
-)
 
-private fun isValueNormal(name: String, value: String): Boolean {
-    val numValue = value.toDoubleOrNull() ?: return true
-    val range = normalRanges[name] ?: return true
-    return numValue >= range.first && numValue <= range.second
-}
 
 private fun calculateScore(normalCount: Int, totalCount: Int): Int {
     if (totalCount == 0) return 100
@@ -108,7 +73,7 @@ private fun getScoreStatus(score: Int): String {
 @Composable
 fun ReportAnalysisScreen(
     categoryName: String = "Blood Count",
-    values: Map<String, String> = emptyMap(),
+    analysis: com.simats.drugssearch.network.OcrResponse? = null,
     onBackClick: () -> Unit = {},
     onHomeClick: () -> Unit = {},
     onViewNormalResultsClick: () -> Unit = {},
@@ -120,10 +85,11 @@ fun ReportAnalysisScreen(
     onProfileClick: () -> Unit = {}
 ) {
     // Calculate normal and abnormal counts
-    val filteredValues = values.filter { it.value.isNotBlank() }
-    val normalCount = filteredValues.count { (key, value) -> isValueNormal(key, value) }
-    val abnormalCount = filteredValues.size - normalCount
-    val totalCount = filteredValues.size
+    // Calculate normal and abnormal counts from backend analysis
+    val parameters = analysis?.parameters ?: emptyMap()
+    val totalCount = parameters.size
+    val normalCount = parameters.values.count { it.status == "Normal" }
+    val abnormalCount = totalCount - normalCount
     
     // Calculate score
     val score = if (totalCount > 0) calculateScore(normalCount, totalCount) else 80

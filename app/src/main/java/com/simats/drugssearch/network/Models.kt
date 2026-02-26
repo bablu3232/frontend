@@ -137,8 +137,11 @@ data class DetectedParameter(
     @SerializedName("value") val value: Any?, // Can be Double or String
     @SerializedName("unit") val unit: String?,
     @SerializedName("status") val status: String?,
+    @SerializedName("risk_level") val riskLevel: String? = "None",
+    @SerializedName("deviation") val deviation: Double? = 0.0,
     @SerializedName("category") val category: String?,
     @SerializedName("condition") val condition: String?,
+    @SerializedName("summary") val summary: String?,
     @SerializedName("recommendation") val recommendation: Recommendation?
 )
 

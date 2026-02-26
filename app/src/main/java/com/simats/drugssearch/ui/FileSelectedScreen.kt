@@ -43,7 +43,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import android.content.Context
-import okhttp3.MediaType
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import java.io.File
@@ -374,15 +376,15 @@ fun FileSelectedScreen(
                             
                             CoroutineScope(Dispatchers.IO).launch {
                                 try {
-                                    val file = getFileFromUri(context, selectedFileUri!!)
+                                    val file = getFileFromUri(context, selectedFileUri!!, selectedFileName)
                                     if (file != null) {
-                                        // Use MediaType.parse and RequestBody.create for OkHttp 3 compatibility
-                                        val mediaType = MediaType.parse("multipart/form-data")
-                                        val requestFile = RequestBody.create(mediaType, file)
+                                        // Use Kotlin extension functions for OkHttp 4 compatibility
+                                        val mediaType = "multipart/form-data".toMediaTypeOrNull()
+                                        val requestFile = file.asRequestBody(mediaType)
                                         val body = MultipartBody.Part.createFormData("report", file.name, requestFile)
                                         
-                                        val textMediaType = MediaType.parse("text/plain")
-                                        val userIdBody = RequestBody.create(textMediaType, userId.toString())
+                                        val textMediaType = "text/plain".toMediaTypeOrNull()
+                                        val userIdBody = userId.toString().toRequestBody(textMediaType)
 
                                         val response = RetrofitClient.instance.uploadReport(userIdBody, body)
                                         
@@ -808,10 +810,10 @@ private fun formatFileSize(bytes: Long): String {
 }
 
 // Helper function to get File from Uri
-private fun getFileFromUri(context: Context, uri: Uri): File? {
+private fun getFileFromUri(context: Context, uri: Uri, originalName: String): File? {
     return try {
         val inputStream: InputStream? = context.contentResolver.openInputStream(uri)
-        val file = File(context.cacheDir, "temp_upload_file_${System.currentTimeMillis()}")
+        val file = File(context.cacheDir, "temp_upload_file_${System.currentTimeMillis()}_$originalName")
         val outputStream = FileOutputStream(file)
         inputStream?.copyTo(outputStream)
         inputStream?.close()
