@@ -39,3 +39,23 @@
 [2026-02-16 17:10:21] Relative Path: uploads/temp_upload_file_1771258221045_1771258220_6993416c998df
 [2026-02-16 17:10:21] DB Connection is alive.
 [2026-02-16 17:10:21] Preparing Statement: INSERT INTO reports (user_id, file_name, file_path, mime_type, extracted_text) VALUES (?, ?, ?, ?, ?)
+1772111679.4778385: Started imports
+1772111680.1936188: Finished standard imports
+1772111680.2217815: Imported cv2
+1772111799.683485: Started imports
+1772111800.4278655: Finished standard imports
+1772111800.5211449: Imported cv2
+1772111800.5211449: Line 12
+1772111800.5211449: Line 14
+1772111800.5211449: Line 17
+1772111800.5221682: File path: sample1.pdf
+1772111800.5221682: Line 22
+1772111988.6196468: Started imports
+1772111989.28808: Finished standard imports
+1772111989.3145034: Imported cv2
+1772111989.315538: Line 12
+1772111989.315538: Line 14
+1772111989.315538: Line 17
+1772111989.3165047: File path: sample1.pdf
+1772111989.3165047: Line 22
+1772111994.127466: Connecting to db...
