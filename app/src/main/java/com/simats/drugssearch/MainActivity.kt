@@ -80,7 +80,9 @@ enum class Screen {
     SafetyWarnings,
     CounsellingNotes,
     HelpSupport,
-    FAQ
+    FAQ,
+    PrivacyPolicyStatic,
+    TermsOfServiceStatic
 }
 
 @Composable
@@ -319,7 +321,9 @@ fun AppNavigation() {
                 navigateTo(Screen.Dashboard) 
             },
             onRegisterClick = { navigateTo(Screen.Register) },
-            onForgotPasswordClick = { navigateTo(Screen.ForgotPassword) }
+            onForgotPasswordClick = { navigateTo(Screen.ForgotPassword) },
+            onPrivacyPolicyClick = { navigateTo(Screen.PrivacyPolicyStatic) },
+            onTermsOfServiceClick = { navigateTo(Screen.TermsOfServiceStatic) }
         )
         
         Screen.Register -> RegisterScreen(
@@ -327,7 +331,9 @@ fun AppNavigation() {
                 userEmail = email
                 navigateTo(Screen.VerifyEmail) 
             },
-            onLoginClick = { navigateTo(Screen.Login) }
+            onLoginClick = { navigateTo(Screen.Login) },
+            onPrivacyPolicyClick = { navigateTo(Screen.PrivacyPolicyStatic) },
+            onTermsOfServiceClick = { navigateTo(Screen.TermsOfServiceStatic) }
         )
         
         Screen.VerifyEmail -> VerifyEmailScreen(
@@ -1019,6 +1025,20 @@ fun AppNavigation() {
         Screen.FAQ -> FAQScreen(
             onBackClick = { navigateTo(Screen.HelpSupport) },
             onHomeClick = { navigateTo(Screen.Dashboard) }
+        )
+
+        Screen.PrivacyPolicyStatic -> PrivacyPolicyScreen(
+            onBackClick = { 
+                currentScreen = previousScreen ?: Screen.Dashboard
+                Modifier
+            }
+        )
+
+        Screen.TermsOfServiceStatic -> TermsOfServiceScreen(
+            onBackClick = { 
+                 currentScreen = previousScreen ?: Screen.Dashboard
+                 Modifier
+            }
         )
     }
 }
