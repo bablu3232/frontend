@@ -89,6 +89,9 @@ fun AppNavigation() {
     val activity = context as? FragmentActivity
     val sessionManager = remember { SessionManager(context) }
 
+    var showPrivacyPolicy by remember { mutableStateOf(false) }
+    var showTermsOfService by remember { mutableStateOf(false) }
+
     var currentScreen by remember { mutableStateOf(Screen.Splash) }
     var previousScreen by remember { mutableStateOf<Screen?>(null) }
     
