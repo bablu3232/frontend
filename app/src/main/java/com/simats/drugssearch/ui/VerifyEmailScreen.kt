@@ -483,20 +483,6 @@ fun VerifyEmailScreen(
                     color = PrimaryBlue,
                     modifier = Modifier.clickable { onTermsOfServiceClick() }
                 )
-                Text(
-                    text = "  •  ",
-                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
-                    color = TextGrayColor
-                )
-                Text(
-                    text = "Contact Us",
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium
-                    ),
-                    color = PrimaryBlue,
-                    modifier = Modifier.clickable { onContactUsClick() }
-                )
             }
 
             Spacer(modifier = Modifier.height(12.dp))

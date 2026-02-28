@@ -81,7 +81,7 @@ fun PrivacyPolicyScreen(
                         .padding(24.dp)
                 ) {
                     Text(
-                        text = "Last Updated: October 2026",
+                        text = "Last Updated: January 2026",
                         style = MaterialTheme.typography.labelMedium,
                         color = TextGray
                     )

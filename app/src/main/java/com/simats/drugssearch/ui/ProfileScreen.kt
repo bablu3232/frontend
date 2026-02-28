@@ -230,19 +230,6 @@ fun ProfileScreen(
                         color = PrimaryBlue,
                         modifier = Modifier.clickable { }
                     )
-                    Text(
-                        text = "  •  ",
-                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
-                        color = TextGrayColor
-                    )
-                    Text(
-                        text = "Contact Us",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            fontSize = 12.sp
-                        ),
-                        color = PrimaryBlue,
-                        modifier = Modifier.clickable { }
-                    )
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))

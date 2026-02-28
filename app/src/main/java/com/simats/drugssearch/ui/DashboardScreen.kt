@@ -611,20 +611,6 @@ fun FooterLinks() {
             color = PrimaryBlue,
             modifier = Modifier.clickable { }
         )
-        Text(
-            text = "  •  ",
-            style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
-            color = TextGrayColor
-        )
-        Text(
-            text = "Contact Us",
-            style = MaterialTheme.typography.bodySmall.copy(
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium
-            ),
-            color = PrimaryBlue,
-            modifier = Modifier.clickable { }
-        )
     }
 }
 

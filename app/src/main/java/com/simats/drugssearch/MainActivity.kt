@@ -101,8 +101,8 @@ fun AppNavigation() {
     fun navigateTo(newScreen: Screen) {
         // Prevent adding duplicate screens to the top of the stack
         if (currentScreen != newScreen) {
-             // If navigating to Dashboard or Login, clear the history stack
-            if (newScreen == Screen.Dashboard || newScreen == Screen.Welcome || newScreen == Screen.Login) {
+             // If navigating to Dashboard or Welcome, clear the history stack
+            if (newScreen == Screen.Dashboard || newScreen == Screen.Welcome) {
                 screenStack = emptyList()
             } else {
                  screenStack = screenStack + currentScreen
