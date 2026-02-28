@@ -16,7 +16,7 @@ $email = trim($data['email']);
 $password = trim($data['password']);
 
 $stmt = $conn->prepare(
-    "SELECT id, full_name, password FROM users WHERE email = ?"
+    "SELECT id, full_name, password, phone, date_of_birth, gender FROM users WHERE email = ?"
 );
 $stmt->bind_param("s", $email);
 $stmt->execute();
@@ -34,5 +34,8 @@ echo json_encode([
     "message" => "Login successful",
     "user_id" => $user['id'],
     "full_name" => $user['full_name'],
-    "email" => $email
+    "email" => $email,
+    "phone" => $user['phone'] ?? "",
+    "date_of_birth" => $user['date_of_birth'] ?? "",
+    "gender" => $user['gender'] ?? ""
 ]);
