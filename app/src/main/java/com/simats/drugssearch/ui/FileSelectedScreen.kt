@@ -87,8 +87,6 @@ fun FileSelectedScreen(
     var selectedFileName by remember { mutableStateOf("") }
     var selectedFileSize by remember { mutableStateOf("") }
     var selectedFileUri by remember { mutableStateOf<Uri?>(null) }
-    var selectedEngine by remember { mutableStateOf("Tesseract") }
-    val engines = listOf("Tesseract", "Gemini", "OCRSpace")
 
     // File picker launcher
     val filePickerLauncher = rememberLauncherForActivityResult(
@@ -368,38 +366,7 @@ fun FileSelectedScreen(
                     }
                 }
 
-                // OCR Engine Selection Options
-                Text(
-                    text = "Select Processing Engine",
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                    color = TextDarkColor,
-                    modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
-                )
-                
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    engines.forEach { engine ->
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.clickable { selectedEngine = engine }
-                        ) {
-                            RadioButton(
-                                selected = (selectedEngine == engine),
-                                onClick = { selectedEngine = engine },
-                                colors = RadioButtonDefaults.colors(selectedColor = PrimaryBlue)
-                            )
-                            Text(
-                                text = engine,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = TextDarkColor
-                            )
-                        }
-                    }
-                }
 
-                Spacer(modifier = Modifier.height(16.dp))
 
                 // Final Action Button (Enabled only after selection)
                 Button(
@@ -419,11 +386,7 @@ fun FileSelectedScreen(
                                         val textMediaType = "text/plain".toMediaTypeOrNull()
                                         val userIdBody = userId.toString().toRequestBody(textMediaType)
 
-                                        val response = when (selectedEngine) {
-                                            "Gemini" -> RetrofitClient.instance.uploadReportGemini(userIdBody, body)
-                                            "OCRSpace" -> RetrofitClient.instance.uploadReportOcrSpace(userIdBody, body)
-                                            else -> RetrofitClient.instance.uploadReport(userIdBody, body)
-                                        }
+                                        val response = RetrofitClient.instance.uploadReportOcrSpace(userIdBody, body)
                                         
                                         withContext(Dispatchers.Main) {
                                             if (response.isSuccessful && response.body()?.status == "success") {

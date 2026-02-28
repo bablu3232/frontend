@@ -73,10 +73,22 @@ if (!file_exists($pythonPath)) {
     logDebug("Found python at $pythonPath");
 }
 
-$scriptPath = __DIR__ . DIRECTORY_SEPARATOR . 'ocrspace_extract.py';
+$fileSize = filesize($_FILES["report"]["tmp_name"]);
+if ($fileSize < 1048576) {
+    logDebug("File under 1MB ($fileSize bytes) -> OCRSpace");
+    $scriptPath = __DIR__ . DIRECTORY_SEPARATOR . 'ocrspace_extract.py';
+} else {
+    logDebug("File over 1MB ($fileSize bytes) -> XAMPP Tesseract");
+    $scriptPath = __DIR__ . '/../../../../xampp/htdocs/drugssearch/ocr_extract.py';
+    if (!file_exists($scriptPath)) {
+        logDebug("XAMPP OCR script not found. Falling back to local ocr_extract.py");
+        $scriptPath = __DIR__ . DIRECTORY_SEPARATOR . 'ocr_extract.py';
+    }
+}
+
 if (!file_exists($scriptPath)) {
-    logDebug("Error: OCRSpace Script not found at $scriptPath");
-    echo json_encode(['error' => 'OCRSpace Script not found at: ' . $scriptPath]);
+    logDebug("Error: OCR Script not found at $scriptPath");
+    echo json_encode(['error' => 'OCR Script not found at: ' . $scriptPath]);
     exit;
 }
 
