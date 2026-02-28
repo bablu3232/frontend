@@ -39,17 +39,17 @@ def get_db_parameters():
 
 def main():
     if len(sys.argv) < 2:
-        print(json.dumps({"error": "No file path provided."}))
+        print("OCR OUTPUT:\n" + json.dumps({"error": "No file path provided."}))
         sys.exit(1)
 
     file_path = sys.argv[1]
     
     if not os.path.exists(file_path):
-        print(json.dumps({"error": "File not found."}))
+        print("OCR OUTPUT:\n" + json.dumps({"error": "File not found."}))
         sys.exit(1)
 
     if not API_KEY or API_KEY == "YOUR_GEMINI_API_KEY_HERE":
-        print(json.dumps({"error": "Gemini API key not configured. Please add it to backend/.env file."}))
+        print("OCR OUTPUT:\n" + json.dumps({"error": "Gemini API key not configured. Please add it to backend/.env file."}))
         sys.exit(1)
 
     genai.configure(api_key=API_KEY)
@@ -63,11 +63,11 @@ def main():
     try:
         uploaded_file = genai.upload_file(path=file_path)
     except Exception as e:
-        print(json.dumps({"error": f"Failed to upload to Gemini: {e}"}))
+        print("OCR OUTPUT:\n" + json.dumps({"error": f"Failed to upload to Gemini: {e}"}))
         sys.exit(1)
         
     prompt = f"""
-You are a highly precise medical laboratory data extraction algorithm. Extract ALL the medical test results and patient details from the provided medical report document.
+You are a precise medical laboratory data extraction algorithm. Extract ALL the medical test results and patient details from the provided medical report document.
 
 IMPORTANT: Respond EXACTLY in this JSON format. DO NOT add markdown like ```json or any other text outside the JSON block.
 {{
@@ -92,7 +92,8 @@ CRITICAL INSTRUCTIONS:
 Only map if it's a clear semantic match. If it's a parameter not in the list, extract its name exactly as it appears.
 """
     try:
-        model = genai.GenerativeModel('gemini-2.5-flash')
+        model_name = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+        model = genai.GenerativeModel(model_name)
         response = model.generate_content([uploaded_file, prompt])
         
         # Parse JSON from response
@@ -171,7 +172,7 @@ Only map if it's a clear semantic match. If it's a parameter not in the list, ex
         print("OCR OUTPUT:\n" + json.dumps(output))
         
     except Exception as e:
-        print(json.dumps({"error": f"Failed during Gemini processing: {e}"}))
+        print("OCR OUTPUT:\n" + json.dumps({"error": f"Failed during Gemini processing: {e}"}))
         sys.exit(1)
 
 if __name__ == "__main__":

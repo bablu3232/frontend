@@ -60,8 +60,8 @@ private fun isValidEmail(email: String): Boolean {
 }
 
 private fun isValidName(name: String): Boolean {
-    // Name must allow only letters and spaces
-    val namePattern = "^[a-zA-Z\\s]+$".toRegex()
+    // Name must allow only letters and spaces and be rigidly > 4 characters (min 5)
+    val namePattern = "^[a-zA-Z\\s]{5,}$".toRegex()
     return name.isNotEmpty() && namePattern.matches(name)
 }
 
@@ -72,9 +72,10 @@ private fun isValidPhone(phone: String): Boolean {
 }
 
 private fun isValidPassword(password: String): Boolean {
-    // Password: Min 8 chars, only letters and numbers involved
-    val passwordPattern = "^[a-zA-Z0-9]{8,}$".toRegex()
-    return password.isNotEmpty() && passwordPattern.matches(password)
+    // Password: Min 8 chars, allows letters, numbers, and special characters
+    val lengthValid = password.length >= 8
+    val hasNoWhitespace = !password.contains("\\s".toRegex())
+    return password.isNotEmpty() && lengthValid && hasNoWhitespace
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -586,7 +587,7 @@ fun RegisterScreen(
                                 fullNameError = "Please enter your full name"
                                 hasError = true
                             } else if (!isValidName(fullName.trim())) {
-                                fullNameError = "Name can only contain letters and spaces"
+                                fullNameError = "Name must be more than 4 characters (letters/spaces only)"
                                 hasError = true
                             }
                             
@@ -604,7 +605,7 @@ fun RegisterScreen(
                             
                             // Validate password
                             if (!isValidPassword(password)) {
-                                passwordError = "Password must be at least 8 characters (letters and numbers only)"
+                                passwordError = "Password must be at least 8 characters with no spaces"
                                 hasError = true
                             }
                             

@@ -386,17 +386,6 @@ fun AbnormalResultsScreen(
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
-
-                // Copyright
-                Text(
-                    text = "© 2026 DrugSearch. All rights reserved.",
-                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
-                    color = TextGrayColor,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
             }
         }
     }

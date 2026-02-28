@@ -41,6 +41,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.*
 import kotlinx.coroutines.launch
 import com.simats.drugssearch.ui.theme.DrugsSearchTheme
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 
 // Review Values Screen Colors
 private val PrimaryBlue = Color(0xFF3B82F6)
@@ -180,7 +182,8 @@ fun ReviewValuesScreen(
                                     unfocusedContainerColor = Color.White,
                                     focusedLabelColor = PrimaryBlue,
                                     unfocusedLabelColor = TextGrayColor
-                                )
+                                ),
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                              Row(modifier = Modifier.fillMaxWidth()) {
@@ -193,11 +196,12 @@ fun ReviewValuesScreen(
                                     colors = OutlinedTextFieldDefaults.colors(
                                         focusedTextColor = TextDarkColor,
                                         unfocusedTextColor = TextDarkColor,
-                                         focusedContainerColor = Color.White,
+                                        focusedContainerColor = Color.White,
                                         unfocusedContainerColor = Color.White,
                                         focusedLabelColor = PrimaryBlue,
                                         unfocusedLabelColor = TextGrayColor
-                                    )
+                                    ),
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 OutlinedTextField(
@@ -209,11 +213,12 @@ fun ReviewValuesScreen(
                                     colors = OutlinedTextFieldDefaults.colors(
                                         focusedTextColor = TextDarkColor,
                                         unfocusedTextColor = TextDarkColor,
-                                         focusedContainerColor = Color.White,
+                                        focusedContainerColor = Color.White,
                                         unfocusedContainerColor = Color.White,
                                         focusedLabelColor = PrimaryBlue,
                                         unfocusedLabelColor = TextGrayColor
-                                    )
+                                    ),
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
                                 )
                             }
                             Spacer(modifier = Modifier.height(8.dp))
@@ -448,63 +453,6 @@ fun ReviewValuesScreen(
                     // Removed "Back to Edit" button as per user request to stay on page
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // Links
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Privacy Policy",
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Medium
-                            ),
-                            color = PrimaryBlue,
-                            modifier = Modifier.clickable { }
-                        )
-                        Text(
-                            text = "  •  ",
-                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
-                            color = TextGrayColor
-                        )
-                        Text(
-                            text = "Terms of Service",
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Medium
-                            ),
-                            color = PrimaryBlue,
-                            modifier = Modifier.clickable { }
-                        )
-                    Text(
-                        text = "  •  ",
-                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
-                        color = TextGrayColor
-                    )
-                    Text(
-                        text = "Contact Us",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium
-                        ),
-                        color = PrimaryBlue,
-                        modifier = Modifier.clickable { }
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Copyright
-                Text(
-                    text = "© 2026 DrugSearch. All rights reserved.",
-                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
-                    color = TextGrayColor,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
             }
         }
     }

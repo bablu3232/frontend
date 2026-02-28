@@ -92,6 +92,22 @@ fun AppNavigation() {
     var currentScreen by remember { mutableStateOf(Screen.Splash) }
     var previousScreen by remember { mutableStateOf<Screen?>(null) }
     
+    // Custom Back Stack Management
+    var screenStack by remember { mutableStateOf(listOf<Screen>()) }
+    
+    fun navigateTo(newScreen: Screen) {
+        // Prevent adding duplicate screens to the top of the stack
+        if (currentScreen != newScreen) {
+             // If navigating to Dashboard or Login, clear the history stack
+            if (newScreen == Screen.Dashboard || newScreen == Screen.Welcome || newScreen == Screen.Login) {
+                screenStack = emptyList()
+            } else {
+                 screenStack = screenStack + currentScreen
+            }
+            currentScreen = newScreen
+        }
+    }
+
     // Biometric prompt logic
     fun showBiometricPrompt(
         onSuccess: () -> Unit,
@@ -129,16 +145,16 @@ fun AppNavigation() {
             val biometricManager = BiometricManager.from(context)
             if (biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG) == BiometricManager.BIOMETRIC_SUCCESS) {
                 showBiometricPrompt(
-                    onSuccess = { currentScreen = Screen.Dashboard },
-                    onError = { currentScreen = Screen.Login }
+                    onSuccess = { navigateTo(Screen.Dashboard) },
+                    onError = { navigateTo(Screen.Login) }
                 )
             } else {
-                currentScreen = Screen.Dashboard
+                navigateTo(Screen.Dashboard)
             }
         } else if (sessionManager.isLoggedIn()) {
-            currentScreen = Screen.Dashboard
+            navigateTo(Screen.Dashboard)
         } else {
-            currentScreen = Screen.Welcome
+            navigateTo(Screen.Welcome)
         }
     }
     
@@ -188,25 +204,27 @@ fun AppNavigation() {
     var dashboardNormalReports by remember { mutableStateOf(0) }
     var dashboardAbnormalReports by remember { mutableStateOf(0) }
 
-    // Fetch dashboard stats when user logs in
-    LaunchedEffect(loggedInUserId) {
-        val uid = loggedInUserId
-        if (uid != null) {
-            try {
-                val response = com.simats.drugssearch.network.RetrofitClient.instance.getUserReports(uid)
-                if (response.isSuccessful) {
-                    val reports = response.body() ?: emptyList()
-                    dashboardTotalReports = reports.size
-                    dashboardNormalReports = reports.count { it.isNormal }
-                    dashboardAbnormalReports = reports.count { !it.isNormal }
+    // Fetch dashboard stats when user logs in or returns to key screens
+    LaunchedEffect(loggedInUserId, currentScreen) {
+        if (currentScreen == Screen.Dashboard || currentScreen == Screen.Profile || currentScreen == Screen.ReportHistory) {
+            val uid = loggedInUserId
+            if (uid != null) {
+                try {
+                    val response = com.simats.drugssearch.network.RetrofitClient.instance.getUserReports(uid)
+                    if (response.isSuccessful) {
+                        val reports = response.body() ?: emptyList()
+                        dashboardTotalReports = reports.size
+                        dashboardNormalReports = reports.count { it.isNormal }
+                        dashboardAbnormalReports = reports.count { !it.isNormal }
+                    }
+                } catch (_: Exception) {
+                    // Silently fail — stats stay at 0
                 }
-            } catch (_: Exception) {
-                // Silently fail — stats stay at 0
+            } else {
+                dashboardTotalReports = 0
+                dashboardNormalReports = 0
+                dashboardAbnormalReports = 0
             }
-        } else {
-            dashboardTotalReports = 0
-            dashboardNormalReports = 0
-            dashboardAbnormalReports = 0
         }
     }
 
@@ -258,6 +276,24 @@ fun AppNavigation() {
         else -> reviewValuesMap
     }
 
+    // Global Back Handler
+    androidx.activity.compose.BackHandler(enabled = true) {
+        if (screenStack.isNotEmpty()) {
+            // Pop the last screen from the stack
+            val previousScreen = screenStack.last()
+            screenStack = screenStack.dropLast(1)
+            currentScreen = previousScreen
+        } else {
+            // If the stack is empty (e.g. on Dashboard), let the system handle closing the app
+            if (currentScreen == Screen.Dashboard || currentScreen == Screen.Welcome) {
+               activity?.finish()
+            } else {
+                // Failsafe: if we somehow got stuck on a sub-screen with an empty stack, go to Dashboard
+                navigateTo(Screen.Dashboard)
+            }
+        }
+    }
+
     // Helper to safely get value from map
     fun getVal(map: Map<String, String>, key: String): String = map[key] ?: ""
 
@@ -267,8 +303,8 @@ fun AppNavigation() {
         })
         
         Screen.Welcome -> WelcomeScreen(
-            onLoginClick = { currentScreen = Screen.Login },
-            onCreateAccountClick = { currentScreen = Screen.Register }
+            onLoginClick = { navigateTo(Screen.Login) },
+            onCreateAccountClick = { navigateTo(Screen.Register) }
         )
         
         Screen.Login -> LoginScreen(
@@ -280,24 +316,24 @@ fun AppNavigation() {
                 userDob = dob
                 userGender = gender
                 sessionManager.saveSession(userId, fullName, email, phone, dob, gender)
-                currentScreen = Screen.Dashboard 
+                navigateTo(Screen.Dashboard) 
             },
-            onRegisterClick = { currentScreen = Screen.Register },
-            onForgotPasswordClick = { currentScreen = Screen.ForgotPassword }
+            onRegisterClick = { navigateTo(Screen.Register) },
+            onForgotPasswordClick = { navigateTo(Screen.ForgotPassword) }
         )
         
         Screen.Register -> RegisterScreen(
             onCreateAccountClick = { _, email, _, _ -> 
                 userEmail = email
-                currentScreen = Screen.VerifyEmail 
+                navigateTo(Screen.VerifyEmail) 
             },
-            onLoginClick = { currentScreen = Screen.Login }
+            onLoginClick = { navigateTo(Screen.Login) }
         )
         
         Screen.VerifyEmail -> VerifyEmailScreen(
             email = userEmail,
-            onVerifyClick = { _ -> currentScreen = Screen.Login },
-            onBackClick = { currentScreen = Screen.Register }
+            onVerifyClick = { _ -> navigateTo(Screen.Login) },
+            onBackClick = { navigateTo(Screen.Register) }
         )
         
         Screen.Dashboard -> DashboardScreen(
@@ -305,31 +341,31 @@ fun AppNavigation() {
             totalReports = dashboardTotalReports,
             normalReports = dashboardNormalReports,
             abnormalReports = dashboardAbnormalReports,
-            onUploadClick = { currentScreen = Screen.Upload },
-            onSearchClick = { currentScreen = Screen.SearchDrugInformation },
-            onHistoryClick = { currentScreen = Screen.ReportHistory },
-            onProfileClick = { currentScreen = Screen.Profile },
+            onUploadClick = { navigateTo(Screen.Upload) },
+            onSearchClick = { navigateTo(Screen.SearchDrugInformation) },
+            onHistoryClick = { navigateTo(Screen.ReportHistory) },
+            onProfileClick = { navigateTo(Screen.Profile) },
             onHomeClick = { /* Already on dashboard */ },
-            onViewAllClick = { currentScreen = Screen.ReportHistory }
+            onViewAllClick = { navigateTo(Screen.ReportHistory) }
         )
         
         Screen.Upload -> UploadScreen(
-            onBackClick = { currentScreen = Screen.Dashboard },
-            onHomeClick = { currentScreen = Screen.Dashboard },
-            onUploadReportClick = { currentScreen = Screen.FileSelected },
+            onBackClick = { navigateTo(Screen.Dashboard) },
+            onHomeClick = { navigateTo(Screen.Dashboard) },
+            onUploadReportClick = { navigateTo(Screen.FileSelected) },
             onManualEntryClick = { 
                 currentReportId = null // Reset for manual entry
-                currentScreen = Screen.ManualEntry 
+                navigateTo(Screen.ManualEntry) 
             },
-            onSearchClick = { currentScreen = Screen.SearchDrugInformation },
-            onHistoryClick = { currentScreen = Screen.ReportHistory },
-            onProfileClick = { currentScreen = Screen.Profile }
+            onSearchClick = { navigateTo(Screen.SearchDrugInformation) },
+            onHistoryClick = { navigateTo(Screen.ReportHistory) },
+            onProfileClick = { navigateTo(Screen.Profile) }
         )
         
         Screen.FileSelected -> FileSelectedScreen(
             userId = loggedInUserId,
-            onBackClick = { currentScreen = Screen.Upload },
-            onHomeClick = { currentScreen = Screen.Dashboard },
+            onBackClick = { navigateTo(Screen.Upload) },
+            onHomeClick = { navigateTo(Screen.Dashboard) },
             onChooseDifferentFileClick = { /* Handled in screen */ },
             onUploadSuccess = { values, category, recommendations, patientDetails, reportId ->
                 selectedCategory = category
@@ -339,11 +375,11 @@ fun AppNavigation() {
                 // For OCR uploads, pass ALL extracted parameters to review/analysis
                 // Don't filter through category-specific models — those are for manual entry only
                 reviewValuesMap = values
-                currentScreen = Screen.ReviewValues
+                navigateTo(Screen.ReviewValues)
             },
-            onSearchClick = { currentScreen = Screen.SearchDrugInformation },
-            onHistoryClick = { currentScreen = Screen.ReportHistory },
-            onProfileClick = { currentScreen = Screen.Profile }
+            onSearchClick = { navigateTo(Screen.SearchDrugInformation) },
+            onHistoryClick = { navigateTo(Screen.ReportHistory) },
+            onProfileClick = { navigateTo(Screen.Profile) }
         )
         
         Screen.ReviewValues -> {
@@ -362,8 +398,8 @@ fun AppNavigation() {
                 categoryName = selectedCategory,
                 values = valuesForReview,
                 initialPatientDetails = currentPatientDetails,
-                onBackClick = { currentScreen = Screen.Upload },
-                onHomeClick = { currentScreen = Screen.Dashboard },
+                onBackClick = { navigateTo(Screen.Upload) },
+                onHomeClick = { navigateTo(Screen.Dashboard) },
                 onSaveClick = { newValues, patientDetails, remarks ->
                     currentPatientDetails = patientDetails
                     currentRemarks = remarks
@@ -493,26 +529,26 @@ fun AppNavigation() {
                                      currentAnalysis = null
                                 }
                                 
-                                currentScreen = Screen.ReportAnalysis
+                                navigateTo(Screen.ReportAnalysis)
                             } else {
                                 // Request failed
-                                currentScreen = Screen.ReportAnalysis 
+                                navigateTo(Screen.ReportAnalysis) 
                             }
                         } catch (e: Exception) {
                             e.printStackTrace()
-                            currentScreen = Screen.ReportAnalysis
+                            navigateTo(Screen.ReportAnalysis)
                         }
                     }
                 },
-                onSearchClick = { currentScreen = Screen.SearchDrugInformation },
-                onHistoryClick = { currentScreen = Screen.ReportHistory },
-                onProfileClick = { currentScreen = Screen.Profile }
+                onSearchClick = { navigateTo(Screen.SearchDrugInformation) },
+                onHistoryClick = { navigateTo(Screen.ReportHistory) },
+                onProfileClick = { navigateTo(Screen.Profile) }
             )
         }
         
         Screen.ManualEntry -> ManualEntryScreen(
-            onBackClick = { currentScreen = Screen.Dashboard },
-            onHomeClick = { currentScreen = Screen.Dashboard },
+            onBackClick = { navigateTo(Screen.Dashboard) },
+            onHomeClick = { navigateTo(Screen.Dashboard) },
             onCategorySelected = { category -> 
                 // Reset state for new entry
                 drugRecommendations = emptyList()
@@ -522,7 +558,7 @@ fun AppNavigation() {
                 currentRemarks = ""
                 
                 selectedCategory = category
-                currentScreen = when (category) {
+                navigateTo(when (category) {
                     "Blood Count" -> Screen.BloodCountEntry
                     "Metabolic Panel" -> Screen.MetabolicPanelEntry
                     "Lipid Profile" -> Screen.LipidProfileEntry
@@ -530,25 +566,25 @@ fun AppNavigation() {
                     "Liver Function" -> Screen.LiverFunctionEntry
                     "Thyroid Panel" -> Screen.ThyroidPanelEntry
                     else -> Screen.ManualEntry
-                }
+                })
             },
-            onSearchClick = { currentScreen = Screen.SearchDrugInformation },
-            onHistoryClick = { currentScreen = Screen.ReportHistory },
-            onProfileClick = { currentScreen = Screen.Profile }
+            onSearchClick = { navigateTo(Screen.SearchDrugInformation) },
+            onHistoryClick = { navigateTo(Screen.ReportHistory) },
+            onProfileClick = { navigateTo(Screen.Profile) }
         )
         
         Screen.BloodCountEntry -> BloodCountEntryScreen(
             initialValues = bloodCountValues, 
-            onBackClick = { currentScreen = if (previousScreen == Screen.ReviewValues) Screen.ReviewValues else Screen.ManualEntry },
-            onHomeClick = { currentScreen = Screen.Dashboard },
+            onBackClick = { navigateTo(if (previousScreen == Screen.ReviewValues) Screen.ReviewValues else Screen.ManualEntry) },
+            onHomeClick = { navigateTo(Screen.Dashboard) },
             onSubmitClick = { values -> 
                 bloodCountValues = values
                 selectedCategory = "Blood Count"
-                currentScreen = Screen.ReviewValues 
+                navigateTo(Screen.ReviewValues) 
             },
-            onSearchClick = { currentScreen = Screen.SearchDrugInformation },
-            onHistoryClick = { currentScreen = Screen.ReportHistory },
-            onProfileClick = { currentScreen = Screen.Profile }
+            onSearchClick = { navigateTo(Screen.SearchDrugInformation) },
+            onHistoryClick = { navigateTo(Screen.ReportHistory) },
+            onProfileClick = { navigateTo(Screen.Profile) }
         )
         
         Screen.MetabolicPanelEntry -> MetabolicPanelEntryScreen(
@@ -556,13 +592,13 @@ fun AppNavigation() {
             onSubmitClick = { values ->
                 metabolicPanelValues = values
                 selectedCategory = "Metabolic Panel"
-                currentScreen = Screen.ReviewValues
+                navigateTo(Screen.ReviewValues)
             },
-             onBackClick = { currentScreen = if (previousScreen == Screen.ReviewValues) Screen.ReviewValues else Screen.ManualEntry },
-             onHomeClick = { currentScreen = Screen.Dashboard },
-             onSearchClick = { currentScreen = Screen.SearchDrugInformation },
-            onHistoryClick = { currentScreen = Screen.ReportHistory },
-            onProfileClick = { currentScreen = Screen.Profile }
+             onBackClick = { navigateTo(if (previousScreen == Screen.ReviewValues) Screen.ReviewValues else Screen.ManualEntry) },
+             onHomeClick = { navigateTo(Screen.Dashboard) },
+             onSearchClick = { navigateTo(Screen.SearchDrugInformation) },
+            onHistoryClick = { navigateTo(Screen.ReportHistory) },
+            onProfileClick = { navigateTo(Screen.Profile) }
         )
         
         Screen.LipidProfileEntry -> LipidProfileEntryScreen(
@@ -570,13 +606,13 @@ fun AppNavigation() {
              onSubmitClick = { values ->
                 lipidProfileValues = values
                 selectedCategory = "Lipid Profile"
-                currentScreen = Screen.ReviewValues
+                navigateTo(Screen.ReviewValues)
             },
-             onBackClick = { currentScreen = if (previousScreen == Screen.ReviewValues) Screen.ReviewValues else Screen.ManualEntry },
-             onHomeClick = { currentScreen = Screen.Dashboard },
-             onSearchClick = { currentScreen = Screen.SearchDrugInformation },
-            onHistoryClick = { currentScreen = Screen.ReportHistory },
-            onProfileClick = { currentScreen = Screen.Profile }
+             onBackClick = { navigateTo(if (previousScreen == Screen.ReviewValues) Screen.ReviewValues else Screen.ManualEntry) },
+             onHomeClick = { navigateTo(Screen.Dashboard) },
+             onSearchClick = { navigateTo(Screen.SearchDrugInformation) },
+            onHistoryClick = { navigateTo(Screen.ReportHistory) },
+            onProfileClick = { navigateTo(Screen.Profile) }
         )
         
         Screen.KidneyFunctionEntry -> KidneyFunctionEntryScreen(
@@ -584,13 +620,13 @@ fun AppNavigation() {
              onSubmitClick = { values ->
                 kidneyFunctionValues = values
                 selectedCategory = "Kidney Function"
-                currentScreen = Screen.ReviewValues
+                navigateTo(Screen.ReviewValues)
             },
-             onBackClick = { currentScreen = if (previousScreen == Screen.ReviewValues) Screen.ReviewValues else Screen.ManualEntry },
-             onHomeClick = { currentScreen = Screen.Dashboard },
-             onSearchClick = { currentScreen = Screen.SearchDrugInformation },
-            onHistoryClick = { currentScreen = Screen.ReportHistory },
-            onProfileClick = { currentScreen = Screen.Profile }
+             onBackClick = { navigateTo(if (previousScreen == Screen.ReviewValues) Screen.ReviewValues else Screen.ManualEntry) },
+             onHomeClick = { navigateTo(Screen.Dashboard) },
+             onSearchClick = { navigateTo(Screen.SearchDrugInformation) },
+            onHistoryClick = { navigateTo(Screen.ReportHistory) },
+            onProfileClick = { navigateTo(Screen.Profile) }
         )
         
         Screen.LiverFunctionEntry -> LiverFunctionEntryScreen(
@@ -598,13 +634,13 @@ fun AppNavigation() {
              onSubmitClick = { values ->
                 liverFunctionValues = values
                 selectedCategory = "Liver Function"
-                currentScreen = Screen.ReviewValues
+                navigateTo(Screen.ReviewValues)
             },
-             onBackClick = { currentScreen = if (previousScreen == Screen.ReviewValues) Screen.ReviewValues else Screen.ManualEntry },
-             onHomeClick = { currentScreen = Screen.Dashboard },
-             onSearchClick = { currentScreen = Screen.SearchDrugInformation },
-            onHistoryClick = { currentScreen = Screen.ReportHistory },
-            onProfileClick = { currentScreen = Screen.Profile }
+             onBackClick = { navigateTo(if (previousScreen == Screen.ReviewValues) Screen.ReviewValues else Screen.ManualEntry) },
+             onHomeClick = { navigateTo(Screen.Dashboard) },
+             onSearchClick = { navigateTo(Screen.SearchDrugInformation) },
+            onHistoryClick = { navigateTo(Screen.ReportHistory) },
+            onProfileClick = { navigateTo(Screen.Profile) }
         )
         
         Screen.ThyroidPanelEntry -> ThyroidPanelEntryScreen(
@@ -612,138 +648,138 @@ fun AppNavigation() {
              onSubmitClick = { values ->
                 thyroidPanelValues = values
                 selectedCategory = "Thyroid Panel"
-                currentScreen = Screen.ReviewValues
+                navigateTo(Screen.ReviewValues)
             },
-             onBackClick = { currentScreen = if (previousScreen == Screen.ReviewValues) Screen.ReviewValues else Screen.ManualEntry },
-             onHomeClick = { currentScreen = Screen.Dashboard },
-             onSearchClick = { currentScreen = Screen.SearchDrugInformation },
-            onHistoryClick = { currentScreen = Screen.ReportHistory },
-            onProfileClick = { currentScreen = Screen.Profile }
+             onBackClick = { navigateTo(if (previousScreen == Screen.ReviewValues) Screen.ReviewValues else Screen.ManualEntry) },
+             onHomeClick = { navigateTo(Screen.Dashboard) },
+             onSearchClick = { navigateTo(Screen.SearchDrugInformation) },
+            onHistoryClick = { navigateTo(Screen.ReportHistory) },
+            onProfileClick = { navigateTo(Screen.Profile) }
         )
         
         Screen.ReportAnalysis -> ReportAnalysisScreen(
              categoryName = selectedCategory,
              analysis = currentAnalysis,
-             onBackClick = { currentScreen = Screen.ReviewValues },
-             onHomeClick = { currentScreen = Screen.Dashboard },
-             onViewNormalResultsClick = { currentScreen = Screen.NormalResults },
-             onViewAbnormalResultsClick = { currentScreen = Screen.AbnormalResults },
-             onViewDrugRecommendationsClick = { currentScreen = Screen.DrugRecommendations },
-             onViewRiskSummaryClick = { currentScreen = Screen.RiskSummary },
-             onSearchClick = { currentScreen = Screen.SearchDrugInformation },
-             onHistoryClick = { currentScreen = Screen.ReportHistory },
-             onProfileClick = { currentScreen = Screen.Profile }
+             onBackClick = { navigateTo(Screen.ReviewValues) },
+             onHomeClick = { navigateTo(Screen.Dashboard) },
+             onViewNormalResultsClick = { navigateTo(Screen.NormalResults) },
+             onViewAbnormalResultsClick = { navigateTo(Screen.AbnormalResults) },
+             onViewDrugRecommendationsClick = { navigateTo(Screen.DrugRecommendations) },
+             onViewRiskSummaryClick = { navigateTo(Screen.RiskSummary) },
+             onSearchClick = { navigateTo(Screen.SearchDrugInformation) },
+             onHistoryClick = { navigateTo(Screen.ReportHistory) },
+             onProfileClick = { navigateTo(Screen.Profile) }
         )
 
         Screen.NormalResults -> NormalResultsScreen(
             categoryName = selectedCategory,
             analysis = currentAnalysis,
-            onBackClick = { currentScreen = Screen.ReportAnalysis },
-            onHomeClick = { currentScreen = Screen.Dashboard },
-            onBackToAnalysisClick = { currentScreen = Screen.ReportAnalysis },
-            onSearchClick = { currentScreen = Screen.SearchDrugInformation },
-            onHistoryClick = { currentScreen = Screen.ReportHistory },
-            onProfileClick = { currentScreen = Screen.Profile }
+            onBackClick = { navigateTo(Screen.ReportAnalysis) },
+            onHomeClick = { navigateTo(Screen.Dashboard) },
+            onBackToAnalysisClick = { navigateTo(Screen.ReportAnalysis) },
+            onSearchClick = { navigateTo(Screen.SearchDrugInformation) },
+            onHistoryClick = { navigateTo(Screen.ReportHistory) },
+            onProfileClick = { navigateTo(Screen.Profile) }
         )
 
         Screen.AbnormalResults -> AbnormalResultsScreen(
             categoryName = selectedCategory,
             analysis = currentAnalysis,
-            onBackClick = { currentScreen = Screen.ReportAnalysis },
-            onHomeClick = { currentScreen = Screen.Dashboard },
-            onBackToAnalysisClick = { currentScreen = Screen.ReportAnalysis },
-            onViewRecommendationsClick = { currentScreen = Screen.DrugRecommendations },
-            onSearchClick = { currentScreen = Screen.SearchDrugInformation },
-            onHistoryClick = { currentScreen = Screen.ReportHistory },
-            onProfileClick = { currentScreen = Screen.Profile }
+            onBackClick = { navigateTo(Screen.ReportAnalysis) },
+            onHomeClick = { navigateTo(Screen.Dashboard) },
+            onBackToAnalysisClick = { navigateTo(Screen.ReportAnalysis) },
+            onViewRecommendationsClick = { navigateTo(Screen.DrugRecommendations) },
+            onSearchClick = { navigateTo(Screen.SearchDrugInformation) },
+            onHistoryClick = { navigateTo(Screen.ReportHistory) },
+            onProfileClick = { navigateTo(Screen.Profile) }
         )
 
         Screen.RiskSummary -> RiskSummaryScreen(
             categoryName = selectedCategory,
             analysis = currentAnalysis,
-            onBackClick = { currentScreen = Screen.ReportAnalysis },
-            onHomeClick = { currentScreen = Screen.Dashboard },
-            onBackToAnalysisClick = { currentScreen = Screen.ReportAnalysis },
-            onViewRecommendationsClick = { currentScreen = Screen.DrugRecommendations },
-            onSearchClick = { currentScreen = Screen.SearchDrugInformation },
-            onHistoryClick = { currentScreen = Screen.ReportHistory },
-            onProfileClick = { currentScreen = Screen.Profile }
+            onBackClick = { navigateTo(Screen.ReportAnalysis) },
+            onHomeClick = { navigateTo(Screen.Dashboard) },
+            onBackToAnalysisClick = { navigateTo(Screen.ReportAnalysis) },
+            onViewRecommendationsClick = { navigateTo(Screen.DrugRecommendations) },
+            onSearchClick = { navigateTo(Screen.SearchDrugInformation) },
+            onHistoryClick = { navigateTo(Screen.ReportHistory) },
+            onProfileClick = { navigateTo(Screen.Profile) }
         )
         
         Screen.DrugRecommendations -> DrugRecommendationsScreen(
             categoryName = selectedCategory,
             recommendations = drugRecommendations,
-            onBackClick = { currentScreen = Screen.ReportAnalysis },
-            onHomeClick = { currentScreen = Screen.Dashboard },
-            onSafetyWarningsClick = { currentScreen = Screen.SafetyWarnings },
-            onCounsellingNotesClick = { currentScreen = Screen.CounsellingNotes },
+            onBackClick = { navigateTo(Screen.ReportAnalysis) },
+            onHomeClick = { navigateTo(Screen.Dashboard) },
+            onSafetyWarningsClick = { navigateTo(Screen.SafetyWarnings) },
+            onCounsellingNotesClick = { navigateTo(Screen.CounsellingNotes) },
             onDrugDetailsClick = { /* recommendation -> Mock Drug Details navigation */ },
-            onSearchClick = { currentScreen = Screen.SearchDrugInformation },
-            onHistoryClick = { currentScreen = Screen.ReportHistory },
-            onProfileClick = { currentScreen = Screen.Profile },
-            onUploadClick = { currentScreen = Screen.Upload }
+            onSearchClick = { navigateTo(Screen.SearchDrugInformation) },
+            onHistoryClick = { navigateTo(Screen.ReportHistory) },
+            onProfileClick = { navigateTo(Screen.Profile) },
+            onUploadClick = { navigateTo(Screen.Upload) }
         )
 
         Screen.SafetyWarnings -> SafetyWarningsScreen(
-            onBackClick = { currentScreen = Screen.DrugRecommendations },
-            onHomeClick = { currentScreen = Screen.Dashboard },
-            onSearchClick = { currentScreen = Screen.SearchDrugInformation },
-            onHistoryClick = { currentScreen = Screen.ReportHistory },
-            onProfileClick = { currentScreen = Screen.Profile }
+            onBackClick = { navigateTo(Screen.DrugRecommendations) },
+            onHomeClick = { navigateTo(Screen.Dashboard) },
+            onSearchClick = { navigateTo(Screen.SearchDrugInformation) },
+            onHistoryClick = { navigateTo(Screen.ReportHistory) },
+            onProfileClick = { navigateTo(Screen.Profile) }
         )
 
         Screen.CounsellingNotes -> CounsellingNotesScreen(
-            onBackClick = { currentScreen = Screen.DrugRecommendations },
-            onHomeClick = { currentScreen = Screen.Dashboard },
-            onSearchClick = { currentScreen = Screen.SearchDrugInformation },
-            onHistoryClick = { currentScreen = Screen.ReportHistory },
-            onProfileClick = { currentScreen = Screen.Profile }
+            onBackClick = { navigateTo(Screen.DrugRecommendations) },
+            onHomeClick = { navigateTo(Screen.Dashboard) },
+            onSearchClick = { navigateTo(Screen.SearchDrugInformation) },
+            onHistoryClick = { navigateTo(Screen.ReportHistory) },
+            onProfileClick = { navigateTo(Screen.Profile) }
         )
 
         Screen.ForgotPassword -> ForgotPasswordScreen(
-            onBackClick = { currentScreen = Screen.Login },
-            onBackToLoginClick = { currentScreen = Screen.Login },
+            onBackClick = { navigateTo(Screen.Login) },
+            onBackToLoginClick = { navigateTo(Screen.Login) },
             onSendOtpClick = { email ->
                 userEmail = email
-                currentScreen = Screen.CheckEmail
+                navigateTo(Screen.CheckEmail)
             }
         )
 
         Screen.CheckEmail -> CheckEmailScreen(
             email = userEmail,
-            onBackToLoginClick = { currentScreen = Screen.Login },
+            onBackToLoginClick = { navigateTo(Screen.Login) },
             onVerifyOtpClick = { _ ->
-                currentScreen = Screen.ResetPassword
+                navigateTo(Screen.ResetPassword)
             },
             onResendOtpClick = { /* Already handled in screen */ }
         )
 
         Screen.ResetPassword -> ResetPasswordScreen(
             email = userEmail,
-            onBackClick = { currentScreen = Screen.Login },
-            onBackToLoginClick = { currentScreen = Screen.Login },
+            onBackClick = { navigateTo(Screen.Login) },
+            onBackToLoginClick = { navigateTo(Screen.Login) },
             onResetPasswordClick = {
-                currentScreen = Screen.Login
+                navigateTo(Screen.Login)
             }
         )
         
         Screen.ReportHistory -> ReportHistoryScreen(
             userId = loggedInUserId ?: 0,
-            onBackClick = { currentScreen = Screen.Dashboard },
-            onHomeClick = { currentScreen = Screen.Dashboard },
+            onBackClick = { navigateTo(Screen.Dashboard) },
+            onHomeClick = { navigateTo(Screen.Dashboard) },
             onReportClick = { report -> 
                 selectedReport = report
-                currentScreen = Screen.ReportDetail
+                navigateTo(Screen.ReportDetail)
             },
-            onNavigationHomeClick = { currentScreen = Screen.Dashboard },
-            onUploadClick = { currentScreen = Screen.Upload },
-            onSearchClick = { currentScreen = Screen.SearchDrugInformation },
-            onProfileClick = { currentScreen = Screen.Profile }
+            onNavigationHomeClick = { navigateTo(Screen.Dashboard) },
+            onUploadClick = { navigateTo(Screen.Upload) },
+            onSearchClick = { navigateTo(Screen.SearchDrugInformation) },
+            onProfileClick = { navigateTo(Screen.Profile) }
         )
         
         Screen.SearchDrugInformation -> SearchDrugInformationScreen(
-            onBackClick = { currentScreen = Screen.Dashboard },
-            onHomeClick = { currentScreen = Screen.Dashboard },
+            onBackClick = { navigateTo(Screen.Dashboard) },
+            onHomeClick = { navigateTo(Screen.Dashboard) },
             onSearchClick = { query -> 
                 searchQuery = query
                 previousScreen = Screen.SearchDrugInformation
@@ -752,14 +788,14 @@ fun AppNavigation() {
                         val response = com.simats.drugssearch.network.RetrofitClient.instance.searchDrugs(query)
                         if (response.isSuccessful) {
                             searchResults = response.body() ?: emptyList()
-                            currentScreen = Screen.SearchResults
+                            navigateTo(Screen.SearchResults)
                         } else { 
                             searchResults = emptyList() 
-                            currentScreen = Screen.SearchResults
+                            navigateTo(Screen.SearchResults)
                         }
                     } catch (e: Exception) { 
                         e.printStackTrace() 
-                        currentScreen = Screen.SearchResults
+                        navigateTo(Screen.SearchResults)
                     }
                 }
             },
@@ -771,37 +807,37 @@ fun AppNavigation() {
                        val response = com.simats.drugssearch.network.RetrofitClient.instance.searchDrugs(drugName)
                        if (response.isSuccessful) {
                            searchResults = response.body() ?: emptyList()
-                           currentScreen = Screen.SearchResults
+                           navigateTo(Screen.SearchResults)
                        } else {
                            searchResults = emptyList()
-                           currentScreen = Screen.SearchResults
+                           navigateTo(Screen.SearchResults)
                        }
                     } catch (e: Exception) { 
                         e.printStackTrace() 
-                        currentScreen = Screen.SearchResults
+                        navigateTo(Screen.SearchResults)
                     }
                 }
             },
-            onBrowseCategoryClick = { currentScreen = Screen.DrugCategories },
-            onNavigationHomeClick = { currentScreen = Screen.Dashboard },
-            onUploadClick = { currentScreen = Screen.Upload },
-            onHistoryClick = { currentScreen = Screen.ReportHistory },
-            onProfileClick = { currentScreen = Screen.Profile }
+            onBrowseCategoryClick = { navigateTo(Screen.DrugCategories) },
+            onNavigationHomeClick = { navigateTo(Screen.Dashboard) },
+            onUploadClick = { navigateTo(Screen.Upload) },
+            onHistoryClick = { navigateTo(Screen.ReportHistory) },
+            onProfileClick = { navigateTo(Screen.Profile) }
         )
         
         Screen.SearchResults -> SearchResultsScreen(
             searchQuery = searchQuery,
             drugs = searchResults,
             onBackClick = { currentScreen = previousScreen ?: Screen.SearchDrugInformation },
-            onHomeClick = { currentScreen = Screen.Dashboard },
+            onHomeClick = { navigateTo(Screen.Dashboard) },
             onDrugClick = { drug -> 
                 selectedDrug = drug
-                currentScreen = Screen.DrugDetails
+                navigateTo(Screen.DrugDetails)
             },
-            onNavigationHomeClick = { currentScreen = Screen.Dashboard },
-            onUploadClick = { currentScreen = Screen.Upload },
-            onHistoryClick = { currentScreen = Screen.ReportHistory },
-            onProfileClick = { currentScreen = Screen.Profile }
+            onNavigationHomeClick = { navigateTo(Screen.Dashboard) },
+            onUploadClick = { navigateTo(Screen.Upload) },
+            onHistoryClick = { navigateTo(Screen.ReportHistory) },
+            onProfileClick = { navigateTo(Screen.Profile) }
         )
         
         Screen.DrugDetails -> {
@@ -818,12 +854,12 @@ fun AppNavigation() {
                 )
                 DrugDetailsScreen(
                     drug = uiDrug,
-                    onBackClick = { currentScreen = Screen.SearchResults },
-                    onHomeClick = { currentScreen = Screen.Dashboard },
-                    onNavigationHomeClick = { currentScreen = Screen.Dashboard },
-                    onUploadClick = { currentScreen = Screen.Upload },
-                    onHistoryClick = { currentScreen = Screen.ReportHistory },
-                    onProfileClick = { currentScreen = Screen.Profile }
+                    onBackClick = { navigateTo(Screen.SearchResults) },
+                    onHomeClick = { navigateTo(Screen.Dashboard) },
+                    onNavigationHomeClick = { navigateTo(Screen.Dashboard) },
+                    onUploadClick = { navigateTo(Screen.Upload) },
+                    onHistoryClick = { navigateTo(Screen.ReportHistory) },
+                    onProfileClick = { navigateTo(Screen.Profile) }
                 )
             } else {
                 Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) { Text("No drug selected") }
@@ -835,13 +871,12 @@ fun AppNavigation() {
                 ProfileScreen(
                      userName = loggedInUserName,
                      userEmail = userEmail,
-                     userPhone = userPhone,
                      totalReports = dashboardTotalReports,
                      normalReports = dashboardNormalReports,
                      abnormalReports = dashboardAbnormalReports,
-                     onBackClick = { currentScreen = Screen.Dashboard },
-                     onPersonalInfoClick = { currentScreen = Screen.PersonalInformation },
-                     onPrivacySecurityClick = { currentScreen = Screen.PrivacySecurity },
+                     onBackClick = { navigateTo(Screen.Dashboard) },
+                     onPersonalInfoClick = { navigateTo(Screen.PersonalInformation) },
+                     onPrivacySecurityClick = { navigateTo(Screen.PrivacySecurity) },
                      onLogoutClick = {
                           sessionManager.clearSession()
                           loggedInUserId = null
@@ -850,22 +885,22 @@ fun AppNavigation() {
                           userPhone = ""
                           userDob = ""
                           userGender = ""
-                          currentScreen = Screen.Welcome
+                          navigateTo(Screen.Welcome)
                      },
-                     onAboutAppClick = { currentScreen = Screen.AboutApp },
-                     onHelpSupportClick = { currentScreen = Screen.HelpSupport },
-                     onHomeClick = { currentScreen = Screen.Dashboard },
-                     onNavigationHomeClick = { currentScreen = Screen.Dashboard },
-                     onSearchClick = { currentScreen = Screen.SearchDrugInformation },
-                     onHistoryClick = { currentScreen = Screen.ReportHistory },
-                     onUploadClick = { currentScreen = Screen.Upload }
+                     onAboutAppClick = { navigateTo(Screen.AboutApp) },
+                     onHelpSupportClick = { navigateTo(Screen.HelpSupport) },
+                     onHomeClick = { navigateTo(Screen.Dashboard) },
+                     onNavigationHomeClick = { navigateTo(Screen.Dashboard) },
+                     onSearchClick = { navigateTo(Screen.SearchDrugInformation) },
+                     onHistoryClick = { navigateTo(Screen.ReportHistory) },
+                     onUploadClick = { navigateTo(Screen.Upload) }
                 )
             }
         }
         
         Screen.AboutApp -> AboutAppScreen(
-            onBackClick = { currentScreen = Screen.Profile },
-            onHomeClick = { currentScreen = Screen.Dashboard }
+            onBackClick = { navigateTo(Screen.Profile) },
+            onHomeClick = { navigateTo(Screen.Dashboard) }
         )
 
         Screen.PersonalInformation -> PersonalInformationScreen(
@@ -875,8 +910,8 @@ fun AppNavigation() {
             initialPhone = userPhone,
             initialDob = userDob,
             initialGender = userGender,
-            onBackClick = { currentScreen = Screen.Profile },
-            onHomeClick = { currentScreen = Screen.Dashboard },
+            onBackClick = { navigateTo(Screen.Profile) },
+            onHomeClick = { navigateTo(Screen.Dashboard) },
             onSaveClick = { name, email, phone, dob, gender ->
                 loggedInUserName = name
                 userEmail = email
@@ -884,19 +919,19 @@ fun AppNavigation() {
                 userDob = dob
                 userGender = gender
                 sessionManager.saveSession(loggedInUserId ?: 0, name, email, phone, dob, gender)
-                currentScreen = Screen.Profile
+                navigateTo(Screen.Profile)
             },
-            onCancelClick = { currentScreen = Screen.Profile }
+            onCancelClick = { navigateTo(Screen.Profile) }
         )
 
         Screen.PrivacySecurity -> PrivacySecurityScreen(
-            onBackClick = { currentScreen = Screen.Profile },
-            onHomeClick = { currentScreen = Screen.Dashboard },
-            onChangePasswordClick = { currentScreen = Screen.ChangePassword },
-            onProfileClick = { currentScreen = Screen.Profile },
-            onUploadClick = { currentScreen = Screen.Upload },
-            onSearchClick = { currentScreen = Screen.SearchDrugInformation },
-            onHistoryClick = { currentScreen = Screen.ReportHistory },
+            onBackClick = { navigateTo(Screen.Profile) },
+            onHomeClick = { navigateTo(Screen.Dashboard) },
+            onChangePasswordClick = { navigateTo(Screen.ChangePassword) },
+            onProfileClick = { navigateTo(Screen.Profile) },
+            onUploadClick = { navigateTo(Screen.Upload) },
+            onSearchClick = { navigateTo(Screen.SearchDrugInformation) },
+            onHistoryClick = { navigateTo(Screen.ReportHistory) },
             onLogoutClick = {
                 sessionManager.clearSession()
                 loggedInUserId = null
@@ -905,13 +940,13 @@ fun AppNavigation() {
                 userPhone = ""
                 userDob = ""
                 userGender = ""
-                currentScreen = Screen.Welcome
+                navigateTo(Screen.Welcome)
             }
         )
 
         Screen.DrugCategories -> DrugCategoriesScreen(
-            onBackClick = { currentScreen = Screen.SearchDrugInformation },
-            onHomeClick = { currentScreen = Screen.Dashboard },
+            onBackClick = { navigateTo(Screen.SearchDrugInformation) },
+            onHomeClick = { navigateTo(Screen.Dashboard) },
             onCategoryClick = { category ->
                 val cleanCategoryName = category.name.replace("\n", " ").trim()
                 
@@ -925,47 +960,47 @@ fun AppNavigation() {
                         )
                         if (response.isSuccessful) {
                             searchResults = response.body() ?: emptyList()
-                            currentScreen = Screen.SearchResults
+                            navigateTo(Screen.SearchResults)
                         } else {
                             searchResults = emptyList()
-                            currentScreen = Screen.SearchResults
+                            navigateTo(Screen.SearchResults)
                         }
                     } catch (e: Exception) {
                         e.printStackTrace()
-                        currentScreen = Screen.SearchResults
+                        navigateTo(Screen.SearchResults)
                     }
                 }
             },
-            onNavigationHomeClick = { currentScreen = Screen.Dashboard },
-            onUploadClick = { currentScreen = Screen.Upload },
-            onHistoryClick = { currentScreen = Screen.ReportHistory },
-            onProfileClick = { currentScreen = Screen.Profile }
+            onNavigationHomeClick = { navigateTo(Screen.Dashboard) },
+            onUploadClick = { navigateTo(Screen.Upload) },
+            onHistoryClick = { navigateTo(Screen.ReportHistory) },
+            onProfileClick = { navigateTo(Screen.Profile) }
         )
 
         Screen.ChangePassword -> ChangePasswordScreen(
             userId = loggedInUserId ?: 0,
-            onBackClick = { currentScreen = Screen.PrivacySecurity }
+            onBackClick = { navigateTo(Screen.PrivacySecurity) }
         )
         
         Screen.ReportDetail -> {
              if (selectedReport != null) {
                  ReportDetailScreen(
                      report = selectedReport!!,
-                     onBackClick = { currentScreen = Screen.ReportHistory },
-                     onHomeClick = { currentScreen = Screen.Dashboard },
-                     onNavigationHomeClick = { currentScreen = Screen.Dashboard },
-                    onUploadClick = { currentScreen = Screen.Upload },
-                    onSearchClick = { currentScreen = Screen.SearchDrugInformation },
-                    onProfileClick = { currentScreen = Screen.Profile }
+                     onBackClick = { navigateTo(Screen.ReportHistory) },
+                     onHomeClick = { navigateTo(Screen.Dashboard) },
+                     onNavigationHomeClick = { navigateTo(Screen.Dashboard) },
+                    onUploadClick = { navigateTo(Screen.Upload) },
+                    onSearchClick = { navigateTo(Screen.SearchDrugInformation) },
+                    onProfileClick = { navigateTo(Screen.Profile) }
                  )
              }
         }
         
         Screen.HelpSupport -> HelpSupportScreen(
-            onBackClick = { currentScreen = Screen.Profile },
-            onHomeClick = { currentScreen = Screen.Dashboard },
-            onFaqClick = { currentScreen = Screen.FAQ },
-            onAboutClick = { currentScreen = Screen.AboutApp },
+            onBackClick = { navigateTo(Screen.Profile) },
+            onHomeClick = { navigateTo(Screen.Dashboard) },
+            onFaqClick = { navigateTo(Screen.FAQ) },
+            onAboutClick = { navigateTo(Screen.AboutApp) },
             onCallClick = { 
                 val intent = Intent(Intent.ACTION_DIAL).apply {
                     data = Uri.parse("tel:1-800-432-584")
@@ -982,8 +1017,8 @@ fun AppNavigation() {
         )
 
         Screen.FAQ -> FAQScreen(
-            onBackClick = { currentScreen = Screen.HelpSupport },
-            onHomeClick = { currentScreen = Screen.Dashboard }
+            onBackClick = { navigateTo(Screen.HelpSupport) },
+            onHomeClick = { navigateTo(Screen.Dashboard) }
         )
     }
 }

@@ -87,6 +87,8 @@ fun FileSelectedScreen(
     var selectedFileName by remember { mutableStateOf("") }
     var selectedFileSize by remember { mutableStateOf("") }
     var selectedFileUri by remember { mutableStateOf<Uri?>(null) }
+    var selectedEngine by remember { mutableStateOf("Tesseract") }
+    val engines = listOf("Tesseract", "Gemini", "OCRSpace")
 
     // File picker launcher
     val filePickerLauncher = rememberLauncherForActivityResult(
@@ -366,7 +368,38 @@ fun FileSelectedScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                // OCR Engine Selection Options
+                Text(
+                    text = "Select Processing Engine",
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                    color = TextDarkColor,
+                    modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
+                )
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    engines.forEach { engine ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.clickable { selectedEngine = engine }
+                        ) {
+                            RadioButton(
+                                selected = (selectedEngine == engine),
+                                onClick = { selectedEngine = engine },
+                                colors = RadioButtonDefaults.colors(selectedColor = PrimaryBlue)
+                            )
+                            Text(
+                                text = engine,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = TextDarkColor
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
 
                 // Final Action Button (Enabled only after selection)
                 Button(
@@ -386,7 +419,11 @@ fun FileSelectedScreen(
                                         val textMediaType = "text/plain".toMediaTypeOrNull()
                                         val userIdBody = userId.toString().toRequestBody(textMediaType)
 
-                                        val response = RetrofitClient.instance.uploadReport(userIdBody, body)
+                                        val response = when (selectedEngine) {
+                                            "Gemini" -> RetrofitClient.instance.uploadReportGemini(userIdBody, body)
+                                            "OCRSpace" -> RetrofitClient.instance.uploadReportOcrSpace(userIdBody, body)
+                                            else -> RetrofitClient.instance.uploadReport(userIdBody, body)
+                                        }
                                         
                                         withContext(Dispatchers.Main) {
                                             if (response.isSuccessful && response.body()?.status == "success") {
@@ -399,53 +436,83 @@ fun FileSelectedScreen(
                                                 var recommendations = mutableListOf<com.simats.drugssearch.ui.DrugRecommendation>()
                                                 var patientDetails: com.simats.drugssearch.network.PatientDetails? = null
 
+                                                var hasError = false
                                                 if (extractedTextJson.isNotEmpty()) {
                                                     try {
-                                                        val gson = com.google.gson.Gson()
-                                                        val ocrResponse = gson.fromJson(extractedTextJson, com.simats.drugssearch.network.OcrResponse::class.java)
-                                                        
-                                                        category = ocrResponse.reportCategory ?: "General"
-                                                        patientDetails = ocrResponse.patientDetails
-                                                        
-                                                        // Extract values from parameters map
-                                                        values = ocrResponse.parameters?.mapValues { entry -> 
-                                                            entry.value.value.toString() 
-                                                        } ?: emptyMap()
+                                                        // Check if the response is an error JSON
+                                                        // Check if the response is an error JSON
+                                                        if (extractedTextJson.contains("\"error\"")) {
+                                                            try {
+                                                                val jsonObject = org.json.JSONObject(extractedTextJson)
+                                                                if (jsonObject.has("error")) {
+                                                                    val errorMessage = jsonObject.getString("error")
+                                                                    withContext(Dispatchers.Main) {
+                                                                        Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
+                                                                    }
+                                                                    hasError = true
+                                                                }
+                                                            } catch (e: Exception) {
+                                                                // Ignore and let Gson handle parsing exception
+                                                            }
+                                                        }
 
-                                                        // Extract recommendations
-                                                        ocrResponse.parameters?.forEach { (name, detail) ->
-                                                            if (detail.recommendation != null) {
-                                                                val rec = detail.recommendation
-                                                                val drugsList = rec.drugs?.split(",")?.map { it.trim() } ?: emptyList()
-                                                                
-                                                                // Assign a color based on status for now (red for high/low)
-                                                                val catColor = if (detail.status == "Normal") com.simats.drugssearch.ui.theme.GreenColor else com.simats.drugssearch.ui.theme.RedColor
-                                                                val catBg = if (detail.status == "Normal") com.simats.drugssearch.ui.theme.GreenBg else com.simats.drugssearch.ui.theme.RedBg
+                                                        if (!hasError) {
+                                                            val gson = com.google.gson.Gson()
+                                                            val ocrResponse = gson.fromJson(extractedTextJson, com.simats.drugssearch.network.OcrResponse::class.java)
+                                                            
+                                                            category = ocrResponse.reportCategory ?: "General"
+                                                            patientDetails = ocrResponse.patientDetails
+                                                            
+                                                            // Extract values from parameters map
+                                                            values = ocrResponse.parameters?.mapValues { entry -> 
+                                                                entry.value.value.toString() 
+                                                            } ?: emptyMap()
 
-                                                                recommendations.add(
-                                                                    com.simats.drugssearch.ui.DrugRecommendation(
-                                                                        parameterName = name, // Pass the parameter name (map key)
-                                                                        name = rec.category ?: "General Recommendation",
-                                                                        condition = detail.condition ?: "Abnormal Value",
-                                                                        category = detail.category ?: "General",
-                                                                        commonDrugs = drugsList,
-                                                                        categoryColor = catColor,
-                                                                        categoryBg = catBg
+                                                            // Extract recommendations
+                                                            ocrResponse.parameters?.forEach { (name, detail) ->
+                                                                if (detail.recommendation != null) {
+                                                                    val rec = detail.recommendation
+                                                                    val drugsList = rec.drugs?.split(",")?.map { it.trim() } ?: emptyList()
+                                                                    
+                                                                    // Assign a color based on status for now (red for high/low)
+                                                                    val catColor = if (detail.status == "Normal") com.simats.drugssearch.ui.theme.GreenColor else com.simats.drugssearch.ui.theme.RedColor
+                                                                    val catBg = if (detail.status == "Normal") com.simats.drugssearch.ui.theme.GreenBg else com.simats.drugssearch.ui.theme.RedBg
+
+                                                                    recommendations.add(
+                                                                        com.simats.drugssearch.ui.DrugRecommendation(
+                                                                            parameterName = name, // Pass the parameter name (map key)
+                                                                            name = rec.category ?: "General Recommendation",
+                                                                            condition = detail.condition ?: "Abnormal Value",
+                                                                            category = detail.category ?: "General",
+                                                                            commonDrugs = drugsList,
+                                                                            categoryColor = catColor,
+                                                                            categoryBg = catBg
+                                                                        )
                                                                     )
-                                                                )
+                                                                }
                                                             }
                                                         }
                                                         
                                                     } catch (e: Exception) {
                                                         e.printStackTrace()
-                                                        Toast.makeText(context, "Error parsing report data", Toast.LENGTH_SHORT).show()
+                                                        withContext(Dispatchers.Main) {
+                                                            val preview = if (extractedTextJson.length > 60) extractedTextJson.substring(0, 60) + "..." else extractedTextJson
+                                                            Toast.makeText(context, "Error parsing: $preview", Toast.LENGTH_LONG).show()
+                                                        }
+                                                        hasError = true
                                                     }
                                                 }
                                                 
-                                                Toast.makeText(context, "Analysis Complete!", Toast.LENGTH_SHORT).show()
-                                                onUploadSuccess(values, category, recommendations, patientDetails, reportId)
+                                                if (!hasError) {
+                                                    withContext(Dispatchers.Main) {
+                                                        Toast.makeText(context, "Analysis Complete!", Toast.LENGTH_SHORT).show()
+                                                        onUploadSuccess(values, category, recommendations, patientDetails, reportId)
+                                                    }
+                                                }
                                             } else {
-                                                Toast.makeText(context, "Upload Failed: ${response.message()}", Toast.LENGTH_SHORT).show()
+                                                withContext(Dispatchers.Main) {
+                                                    Toast.makeText(context, "Upload Failed: ${response.message()}", Toast.LENGTH_SHORT).show()
+                                                }
                                             }
                                         }
                                     } else {
@@ -588,62 +655,6 @@ fun FileSelectedScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Footer Navigation Links
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Privacy Policy",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium
-                        ),
-                        color = PrimaryBlue,
-                        modifier = Modifier.clickable { }
-                    )
-                    Text(
-                        text = "  •  ",
-                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
-                        color = TextGrayColor
-                    )
-                    Text(
-                        text = "Terms of Service",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium
-                        ),
-                        color = PrimaryBlue,
-                        modifier = Modifier.clickable { }
-                    )
-                    Text(
-                        text = "  •  ",
-                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
-                        color = TextGrayColor
-                    )
-                    Text(
-                        text = "Contact Us",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium
-                        ),
-                        color = PrimaryBlue,
-                        modifier = Modifier.clickable { }
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Copyright Information
-                Text(
-                    text = "© 2026 DrugSearch. All rights reserved.",
-                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
-                    color = TextGrayColor,
-                    textAlign = TextAlign.Center
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
             }
         }
     }

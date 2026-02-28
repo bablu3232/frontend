@@ -139,49 +139,6 @@ fun FAQScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Footer Links
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = "Privacy Policy",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = PrimaryBlue
-                    )
-                    Text(
-                        text = "  •  ",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextGrayColor
-                    )
-                    Text(
-                        text = "Terms of Service",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = PrimaryBlue
-                    )
-                    Text(
-                        text = "  •  ",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextGrayColor
-                    )
-                    Text(
-                        text = "Contact Us",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = PrimaryBlue
-                    )
-                }
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                 Text(
-                     text = "© 2026 DrugSearch. All rights reserved.",
-                     style = MaterialTheme.typography.bodySmall,
-                     color = TextGrayColor,
-                     modifier = Modifier.align(Alignment.CenterHorizontally)
-                )
-
-                Spacer(modifier = Modifier.height(32.dp))
             }
         }
     }

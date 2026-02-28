@@ -448,15 +448,6 @@ fun ChangePasswordScreen(
             )
 
             Spacer(modifier = Modifier.height(24.dp))
-
-            // Copyright
-            Text(
-                text = "© 2026 DrugSearch. All rights reserved.",
-                style = MaterialTheme.typography.bodySmall,
-                color = TextGrayColor
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }

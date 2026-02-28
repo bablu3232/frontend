@@ -318,53 +318,6 @@ fun BloodCountEntryScreen(
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
-
-                // Footer Links
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Privacy Policy",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium
-                        ),
-                        color = PrimaryBlue,
-                        modifier = Modifier.clickable { }
-                    )
-                    Text(
-                        text = "  •  ",
-                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
-                        color = TextGrayColor
-                    )
-                    Text(
-                        text = "Terms of Service",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium
-                        ),
-                        color = PrimaryBlue,
-                        modifier = Modifier.clickable { }
-                    )
-                    Text(
-                        text = "  •  ",
-                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
-                        color = TextGrayColor
-                    )
-                    Text(
-                        text = "Contact Us",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium
-                        ),
-                        color = PrimaryBlue,
-                        modifier = Modifier.clickable { }
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
             }
         }
     }

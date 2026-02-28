@@ -463,62 +463,6 @@ fun MedicalDisclaimerCard() {
     }
 
     Spacer(modifier = Modifier.height(16.dp))
-
-    // Footer Links
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = "Privacy Policy",
-            style = MaterialTheme.typography.bodySmall.copy(
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Medium
-            ),
-            color = PrimaryBlue,
-            modifier = Modifier.clickable { }
-        )
-        Text(
-            text = "  |  ",
-            style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
-            color = TextGrayColor
-        )
-        Text(
-            text = "Terms of Service",
-            style = MaterialTheme.typography.bodySmall.copy(
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Medium
-            ),
-            color = PrimaryBlue,
-            modifier = Modifier.clickable { }
-        )
-        Text(
-            text = "  |  ",
-            style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
-            color = TextGrayColor
-        )
-        Text(
-            text = "Contact Us",
-            style = MaterialTheme.typography.bodySmall.copy(
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Medium
-            ),
-            color = PrimaryBlue,
-            modifier = Modifier.clickable { }
-        )
-    }
-
-    Spacer(modifier = Modifier.height(12.dp))
-
-    // Copyright
-    Text(
-        text = "© 2026 DrugSearch. All rights reserved.",
-        style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
-        color = TextGrayColor,
-        textAlign = TextAlign.Center,
-        modifier = Modifier.fillMaxWidth()
-    )
 }
 
 @Preview(showBackground = true, showSystemUi = true)

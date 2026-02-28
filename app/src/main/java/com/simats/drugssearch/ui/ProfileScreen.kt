@@ -55,7 +55,6 @@ private val RedColor = Color(0xFFEF4444)
 fun ProfileScreen(
     userName: String = "John Doe",
     userEmail: String = "john.doe@email.com",
-    userPhone: String = "+1 (555) 123-4567",
     totalReports: Int = 12,
     normalReports: Int = 8,
     abnormalReports: Int = 4,
@@ -72,6 +71,8 @@ fun ProfileScreen(
     onSearchClick: () -> Unit = {},
     onHistoryClick: () -> Unit = {}
 ) {
+    var showLogoutDialog by remember { mutableStateOf(false) }
+
     Scaffold(
         bottomBar = {
             DrugSearchBottomNav(
@@ -108,7 +109,6 @@ fun ProfileScreen(
                 ProfileHeaderSection(
                     userName = userName,
                     userEmail = userEmail,
-                    userPhone = userPhone,
                     totalReports = totalReports,
                     normalReports = normalReports,
                     abnormalReports = abnormalReports
@@ -160,7 +160,36 @@ fun ProfileScreen(
                         title = "Logout",
                         iconBackgroundColor = LightRedBg,
                         iconTint = RedColor,
-                        onClick = onLogoutClick
+                        onClick = { showLogoutDialog = true }
+                    )
+                }
+
+                if (showLogoutDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showLogoutDialog = false },
+                        title = {
+                            Text(text = "Confirm Logout", fontWeight = FontWeight.Bold)
+                        },
+                        text = {
+                            Text("Are you sure you want to log out of your account?")
+                        },
+                        confirmButton = {
+                            Button(
+                                onClick = {
+                                    showLogoutDialog = false
+                                    onLogoutClick()
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = RedColor)
+                            ) {
+                                Text("Yes, Logout")
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showLogoutDialog = false }) {
+                                Text("Cancel", color = TextGrayColor)
+                            }
+                        },
+                        containerColor = Color.White
                     )
                 }
 
@@ -301,7 +330,6 @@ private fun ProfileTopBar(
 private fun ProfileHeaderSection(
     userName: String,
     userEmail: String,
-    userPhone: String,
     totalReports: Int,
     normalReports: Int,
     abnormalReports: Int
@@ -348,15 +376,6 @@ private fun ProfileHeaderSection(
         // User Email
         Text(
             text = userEmail,
-            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
-            color = TextGrayColor
-        )
-
-        Spacer(modifier = Modifier.height(4.dp))
-
-        // User Phone
-        Text(
-            text = userPhone,
             style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
             color = TextGrayColor
         )

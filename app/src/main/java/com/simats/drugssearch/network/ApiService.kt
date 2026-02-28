@@ -24,6 +24,20 @@ interface ApiService {
         @Part file: MultipartBody.Part
     ): Response<UploadResponse>
 
+    @Multipart
+    @POST("upload_report_gemini.php")
+    suspend fun uploadReportGemini(
+        @Part("user_id") userId: okhttp3.RequestBody,
+        @Part file: MultipartBody.Part
+    ): Response<UploadResponse>
+
+    @Multipart
+    @POST("upload_report_ocrspace.php")
+    suspend fun uploadReportOcrSpace(
+        @Part("user_id") userId: okhttp3.RequestBody,
+        @Part file: MultipartBody.Part
+    ): Response<UploadResponse>
+
     @GET("test_connection.php")
     suspend fun testConnection(): Response<Void>
 
