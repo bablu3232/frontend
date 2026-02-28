@@ -38,7 +38,7 @@ fun TermsOfServiceScreen(
                 .fillMaxHeight(0.85f),
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface
+                containerColor = Color.White
             ),
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         ) {
@@ -64,12 +64,12 @@ fun TermsOfServiceScreen(
                         Icon(
                             imageVector = Icons.Default.Close,
                             contentDescription = "Close",
-                            tint = TextDarkColor
+                            tint = TextDarkGray
                         )
                     }
                 }
 
-                Divider(color = LightGray)
+                Divider(color = TextGray)
 
                 // Scrollable Content
                 Column(
@@ -82,7 +82,7 @@ fun TermsOfServiceScreen(
                     Text(
                         text = "Last Updated: October 2026",
                         style = MaterialTheme.typography.labelMedium,
-                        color = TextGrayColor
+                        color = TextGray
                     )
                     
                     Spacer(modifier = Modifier.height(16.dp))
@@ -90,48 +90,48 @@ fun TermsOfServiceScreen(
                     Text(
                         text = "1. Acceptance of Terms",
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                        color = TextDarkColor
+                        color = Color.Black
                     )
                     Text(
                         text = "By creating an account and logging into the DrugsSearch platform, you agree to comply with and be bound by these Terms of Service. If you disagree with any part of the terms, you must not use our service.",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = TextDarkColor,
+                        color = Color.Black,
                         modifier = Modifier.padding(top = 8.dp, bottom = 16.dp)
                     )
 
                     Text(
                         text = "2. Medical Disclaimer (Not Medical Advice)",
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                        color = TextDarkColor
+                        color = Color.Black
                     )
                     Text(
                         text = "The DrugsSearch application is an informational tool only. Any OCR analysis, drug recommendations, or risk assessments provided by this application DO NOT CONSTITUTE PROFESSIONAL MEDICAL ADVICE. You should ALWAYS consult a qualified healthcare provider or doctor for medical diagnosis, advice, or treatment.",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = TextDarkColor,
+                        color = Color.Black,
                         modifier = Modifier.padding(top = 8.dp, bottom = 16.dp)
                     )
 
                     Text(
                         text = "3. User Accounts",
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                        color = TextDarkColor
+                        color = Color.Black
                     )
                     Text(
                         text = "When you create an account, you must provide information that is accurate, complete, and current at all times. Failure to do so constitutes a breach of the Terms, which may result in immediate termination of your account.",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = TextDarkColor,
+                        color = Color.Black,
                         modifier = Modifier.padding(top = 8.dp, bottom = 16.dp)
                     )
 
                     Text(
                         text = "4. Accuracy of OCR Data",
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                        color = TextDarkColor
+                        color = Color.Black
                     )
                     Text(
                         text = "We use third-party APIs (Gemini, OCRSpace) to extract text from your uploaded lab files. We cannot guarantee 100% accuracy. Users are solely responsible for manually verifying the extracted parameters against their original physical report before saving any analysis.",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = TextDarkColor,
+                        color = Color.Black,
                         modifier = Modifier.padding(top = 8.dp, bottom = 16.dp)
                     )
                     

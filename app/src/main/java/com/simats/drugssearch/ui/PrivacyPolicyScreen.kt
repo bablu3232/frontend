@@ -38,7 +38,7 @@ fun PrivacyPolicyScreen(
                 .fillMaxHeight(0.85f),
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface
+                containerColor = Color.White
             ),
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         ) {
@@ -64,12 +64,12 @@ fun PrivacyPolicyScreen(
                         Icon(
                             imageVector = Icons.Default.Close,
                             contentDescription = "Close",
-                            tint = TextDarkColor
+                            tint = TextDarkGray
                         )
                     }
                 }
 
-                Divider(color = LightGray)
+                Divider(color = TextGray)
 
                 // Scrollable Content
                 Column(
@@ -82,7 +82,7 @@ fun PrivacyPolicyScreen(
                     Text(
                         text = "Last Updated: October 2026",
                         style = MaterialTheme.typography.labelMedium,
-                        color = TextGrayColor
+                        color = TextGray
                     )
                     
                     Spacer(modifier = Modifier.height(16.dp))
@@ -90,48 +90,48 @@ fun PrivacyPolicyScreen(
                     Text(
                         text = "1. Information We Collect",
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                        color = TextDarkColor
+                        color = Color.Black
                     )
                     Text(
                         text = "We collect personal information that you provide securely to us, such as your name, email, phone number, date of birth, and gender during registration. We also store the medical report parameters (e.g., Blood Count, Lipid Profiles) that you choose to upload or manually enter so you can track your history.",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = TextDarkColor,
+                        color = Color.Black,
                         modifier = Modifier.padding(top = 8.dp, bottom = 16.dp)
                     )
 
                     Text(
                         text = "2. How We Use Your Information",
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                        color = TextDarkColor
+                        color = Color.Black
                     )
                     Text(
                         text = "Your data is used strictly to provide you with insights regarding your health parameters. We cross-reference your uploaded lab results with our medical library to highlight potential risks and generate personalized drug recommendations. We do not sell your personal data to third parties.",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = TextDarkColor,
+                        color = Color.Black,
                         modifier = Modifier.padding(top = 8.dp, bottom = 16.dp)
                     )
 
                     Text(
                         text = "3. Medical Data Security",
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                        color = TextDarkColor
+                        color = Color.Black
                     )
                     Text(
                         text = "We implement strict security measures to protect your sensitive health records. The reports you upload are encrypted in transit and at rest. Please safeguard your account password, and never share login credentials.",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = TextDarkColor,
+                        color = Color.Black,
                         modifier = Modifier.padding(top = 8.dp, bottom = 16.dp)
                     )
 
                     Text(
                         text = "4. Your Data Rights",
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                        color = TextDarkColor
+                        color = Color.Black
                     )
                     Text(
                         text = "You have the right to access, update, or permanently delete your account and all associated medical reports at any time. For data deletion requests, you can utilize the options available within the App Profile Privacy settings.",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = TextDarkColor,
+                        color = Color.Black,
                         modifier = Modifier.padding(top = 8.dp, bottom = 16.dp)
                     )
                     

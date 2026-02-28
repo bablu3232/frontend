@@ -80,9 +80,7 @@ enum class Screen {
     SafetyWarnings,
     CounsellingNotes,
     HelpSupport,
-    FAQ,
-    PrivacyPolicyStatic,
-    TermsOfServiceStatic
+    FAQ
 }
 
 @Composable
@@ -322,8 +320,8 @@ fun AppNavigation() {
             },
             onRegisterClick = { navigateTo(Screen.Register) },
             onForgotPasswordClick = { navigateTo(Screen.ForgotPassword) },
-            onPrivacyPolicyClick = { navigateTo(Screen.PrivacyPolicyStatic) },
-            onTermsOfServiceClick = { navigateTo(Screen.TermsOfServiceStatic) }
+            onPrivacyPolicyClick = { showPrivacyPolicy = true },
+            onTermsOfServiceClick = { showTermsOfService = true }
         )
         
         Screen.Register -> RegisterScreen(
@@ -332,8 +330,8 @@ fun AppNavigation() {
                 navigateTo(Screen.VerifyEmail) 
             },
             onLoginClick = { navigateTo(Screen.Login) },
-            onPrivacyPolicyClick = { navigateTo(Screen.PrivacyPolicyStatic) },
-            onTermsOfServiceClick = { navigateTo(Screen.TermsOfServiceStatic) }
+            onPrivacyPolicyClick = { showPrivacyPolicy = true },
+            onTermsOfServiceClick = { showTermsOfService = true }
         )
         
         Screen.VerifyEmail -> VerifyEmailScreen(
@@ -1026,19 +1024,17 @@ fun AppNavigation() {
             onBackClick = { navigateTo(Screen.HelpSupport) },
             onHomeClick = { navigateTo(Screen.Dashboard) }
         )
+    }
 
-        Screen.PrivacyPolicyStatic -> PrivacyPolicyScreen(
-            onBackClick = { 
-                currentScreen = previousScreen ?: Screen.Dashboard
-                Modifier
-            }
+    if (showPrivacyPolicy) {
+        PrivacyPolicyScreen(
+            onBackClick = { showPrivacyPolicy = false }
         )
+    }
 
-        Screen.TermsOfServiceStatic -> TermsOfServiceScreen(
-            onBackClick = { 
-                 currentScreen = previousScreen ?: Screen.Dashboard
-                 Modifier
-            }
+    if (showTermsOfService) {
+        TermsOfServiceScreen(
+            onBackClick = { showTermsOfService = false }
         )
     }
 }
