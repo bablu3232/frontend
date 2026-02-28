@@ -15,3 +15,14 @@
 local.properties
 
 backend/.env
+
+# Backend runtime files
+backend/__pycache__/
+backend/uploads/
+backend/*.log
+backend/*.txt
+backend/*.pdf
+backend/*.png
+backend/*.jpg
+backend/*.jpeg
+backend/dbdb
