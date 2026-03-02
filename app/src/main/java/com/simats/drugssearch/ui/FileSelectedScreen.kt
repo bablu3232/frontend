@@ -87,6 +87,7 @@ fun FileSelectedScreen(
     var selectedFileName by remember { mutableStateOf("") }
     var selectedFileSize by remember { mutableStateOf("") }
     var selectedFileUri by remember { mutableStateOf<Uri?>(null) }
+    var isLoading by remember { mutableStateOf(false) }
 
     // File picker launcher
     val filePickerLauncher = rememberLauncherForActivityResult(
@@ -371,8 +372,8 @@ fun FileSelectedScreen(
                 // Final Action Button (Enabled only after selection)
                 Button(
                     onClick = {
-                        if (isFileUploaded && selectedFileUri != null && userId != null) {
-                            // isLoading = true // You might want to add a loading state variable
+                        if (!isLoading && isFileUploaded && selectedFileUri != null && userId != null) {
+                            isLoading = true
                             
                             CoroutineScope(Dispatchers.IO).launch {
                                 try {
@@ -459,6 +460,7 @@ fun FileSelectedScreen(
                                                     } catch (e: Exception) {
                                                         e.printStackTrace()
                                                         withContext(Dispatchers.Main) {
+                                                            isLoading = false
                                                             val preview = if (extractedTextJson.length > 60) extractedTextJson.substring(0, 60) + "..." else extractedTextJson
                                                             Toast.makeText(context, "Error parsing: $preview", Toast.LENGTH_LONG).show()
                                                         }
@@ -468,23 +470,27 @@ fun FileSelectedScreen(
                                                 
                                                 if (!hasError) {
                                                     withContext(Dispatchers.Main) {
+                                                        isLoading = false
                                                         Toast.makeText(context, "Analysis Complete!", Toast.LENGTH_SHORT).show()
                                                         onUploadSuccess(values, category, recommendations, patientDetails, reportId)
                                                     }
                                                 }
                                             } else {
                                                 withContext(Dispatchers.Main) {
+                                                    isLoading = false
                                                     Toast.makeText(context, "Upload Failed: ${response.message()}", Toast.LENGTH_SHORT).show()
                                                 }
                                             }
                                         }
                                     } else {
                                         withContext(Dispatchers.Main) {
+                                            isLoading = false
                                             Toast.makeText(context, "Error processing file", Toast.LENGTH_SHORT).show()
                                         }
                                     }
                                 } catch (e: Exception) {
                                     withContext(Dispatchers.Main) {
+                                        isLoading = false
                                         Toast.makeText(context, "Network Error: ${e.message}", Toast.LENGTH_SHORT).show()
                                     }
                                 }
@@ -496,27 +502,44 @@ fun FileSelectedScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(52.dp),
-                    enabled = isFileUploaded,
+                    enabled = isFileUploaded && !isLoading,
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = PrimaryBlue,
                         disabledContainerColor = PrimaryBlue.copy(alpha = 0.5f)
                     )
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Upload,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Upload & Analyze Report",
-                        style = MaterialTheme.typography.bodyLarge.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 16.sp
-                        ),
-                        color = Color.White
-                    )
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = "Analyzing Report...",
+                            style = MaterialTheme.typography.bodyLarge.copy(
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 16.sp
+                            ),
+                            color = Color.White
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.Upload,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Upload & Analyze Report",
+                            style = MaterialTheme.typography.bodyLarge.copy(
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 16.sp
+                            ),
+                            color = Color.White
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
