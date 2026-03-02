@@ -150,14 +150,18 @@ PARAMETER_ALIASES = {
     "uric acid": "Uric Acid",
     "urie acid": "Uric Acid",
     "unie acid": "Uric Acid",
+    "platelet count": "Platelet Count",
+    "paf": "Platelet Count",
     # RA Factor
     "ra factor": "RA Factor",
     "ra": "RA Factor",
     "rheumatoid factor": "RA Factor",
     # Hemoglobin
-    "haemoglobin": "Hemoglobin",
     "hemoglobin": "Hemoglobin",
+    "hemoglobin (hb)": "Hemoglobin",
     "hb": "Hemoglobin",
+    "haemoglobin": "Hemoglobin",
+    "heamoglobin": "Hemoglobin",
     "hgb": "Hemoglobin",
     # Liver Function Tests
     "sgpt": "ALT (SGPT)",
@@ -195,10 +199,13 @@ PARAMETER_ALIASES = {
     "platelets": "Platelets",
     "hematocrit": "Hematocrit",
     "hct": "Hematocrit",
+    # Indices
     "pcv": "PCV",
     "packed cell volume": "PCV",
+    "packed cell volume (pcv)": "PCV",
     "mcv": "MCV",
     "mean corpuscular volume": "MCV",
+    "mean corpuscular volume (mcv)": "MCV",
     "mch": "MCH",
     "mean corpuscular hemoglobin": "MCH",
     "mchc": "MCHC",

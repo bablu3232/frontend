@@ -69,7 +69,6 @@ fun LoginScreen(
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var rememberMe by remember { mutableStateOf(false) }
     var passwordVisible by remember { mutableStateOf(false) }
     var emailError by remember { mutableStateOf<String?>(null) }
     var isLoading by remember { mutableStateOf(false) }
@@ -298,33 +297,9 @@ fun LoginScreen(
                     // Remember Me & Forgot Password Row
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
+                        horizontalArrangement = Arrangement.End,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Remember Me Checkbox
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.clickable { rememberMe = !rememberMe }
-                        ) {
-                            Checkbox(
-                                checked = rememberMe,
-                                onCheckedChange = { rememberMe = it },
-                                colors = CheckboxDefaults.colors(
-                                    checkedColor = PrimaryBlue,
-                                    uncheckedColor = InputBorderColor
-                                ),
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "Remember me",
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontSize = 14.sp
-                                ),
-                                color = TextDarkColor
-                            )
-                        }
-
                         // Forgot Password
                         Text(
                             text = "Forgot password?",
