@@ -94,7 +94,6 @@ PARAMETER_ALIASES = {
     "vldl chotesterol": "VLDL Cholesterol",
     "vldl": "VLDL Cholesterol",
     # Triglycerides (including OCR typos)
-    "sr. triglycerides": "Triglycerides",
     "sr triglycerides": "Triglycerides",
     "serum triglycerides": "Triglycerides",
     "triglycerides": "Triglycerides",
@@ -104,6 +103,10 @@ PARAMETER_ALIASES = {
     "tigycerides": "Triglycerides",
     "sr. tigycerides": "Triglycerides",
     "sr tigycerides": "Triglycerides",
+    # Lipoprotein(a)
+    "lipoprotein(a)": "Lipoprotein(a)",
+    "lp(a)": "Lipoprotein(a)",
+    "lipoprotein (a)": "Lipoprotein(a)",
     # Creatinine (including OCR typos)
     "sr. creatinine": "Creatinine",
     "sr creatinine": "Creatinine",
@@ -137,6 +140,10 @@ PARAMETER_ALIASES = {
     "blood urea nitrogen": "BUN",
     "urea nitrogen": "BUN",
     "bun": "BUN",
+    # Blood Urea (Distinct from BUN)
+    "blood urea": "Blood Urea",
+    "urea": "Blood Urea",
+    "serum urea": "Blood Urea",
     # Uric Acid
     "serum uric acid": "Uric Acid",
     "sr. uric acid": "Uric Acid",
@@ -196,6 +203,8 @@ PARAMETER_ALIASES = {
     "mean corpuscular hemoglobin": "MCH",
     "mchc": "MCHC",
     "mean corpuscular hb conc": "MCHC",
+    "rdw": "RDW",
+    "red cell distribution width": "RDW",
     "esr": "ESR",
     "erythrocyte sedimentation rate": "ESR",
     "sed rate": "ESR",
@@ -216,6 +225,10 @@ PARAMETER_ALIASES = {
     "potassium": "Potassium",
     "calcium": "Calcium",
     "bicarbonate": "Bicarbonate",
+    "chloride": "Chloride",
+    "carbon dioxide": "Carbon dioxide",
+    "co2": "Carbon dioxide",
+    "carbon di oxide": "Carbon dioxide",
     "egfr": "eGFR",
     "e-gfr": "eGFR",
     "estimated gfr": "eGFR",
