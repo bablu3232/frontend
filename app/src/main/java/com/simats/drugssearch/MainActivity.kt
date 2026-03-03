@@ -80,7 +80,9 @@ enum class Screen {
     SafetyWarnings,
     CounsellingNotes,
     HelpSupport,
-    FAQ
+    FAQ,
+    AdminLogin,
+    AdminDashboard
 }
 
 @Composable
@@ -102,7 +104,7 @@ fun AppNavigation() {
         // Prevent adding duplicate screens to the top of the stack
         if (currentScreen != newScreen) {
              // If navigating to Dashboard or Welcome, clear the history stack
-            if (newScreen == Screen.Dashboard || newScreen == Screen.Welcome) {
+            if (newScreen == Screen.Dashboard || newScreen == Screen.Welcome || newScreen == Screen.AdminDashboard) {
                 screenStack = emptyList()
             } else {
                  screenStack = screenStack + currentScreen
@@ -144,7 +146,9 @@ fun AppNavigation() {
 
     // Check biometric on splash complete
     fun handleSplashComplete() {
-        if (sessionManager.isLoggedIn() && sessionManager.isBiometricEnabled()) {
+        if (sessionManager.isAdminLoggedIn()) {
+            navigateTo(Screen.AdminDashboard)
+        } else if (sessionManager.isLoggedIn() && sessionManager.isBiometricEnabled()) {
             val biometricManager = BiometricManager.from(context)
             if (biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG) == BiometricManager.BIOMETRIC_SUCCESS) {
                 showBiometricPrompt(
@@ -288,7 +292,7 @@ fun AppNavigation() {
             currentScreen = previousScreen
         } else {
             // If the stack is empty (e.g. on Dashboard), let the system handle closing the app
-            if (currentScreen == Screen.Dashboard || currentScreen == Screen.Welcome) {
+            if (currentScreen == Screen.Dashboard || currentScreen == Screen.Welcome || currentScreen == Screen.AdminDashboard) {
                activity?.finish()
             } else {
                 // Failsafe: if we somehow got stuck on a sub-screen with an empty stack, go to Dashboard
@@ -324,7 +328,8 @@ fun AppNavigation() {
             onRegisterClick = { navigateTo(Screen.Register) },
             onForgotPasswordClick = { navigateTo(Screen.ForgotPassword) },
             onPrivacyPolicyClick = { showPrivacyPolicy = true },
-            onTermsOfServiceClick = { showTermsOfService = true }
+            onTermsOfServiceClick = { showTermsOfService = true },
+            onAdminLoginClick = { navigateTo(Screen.AdminLogin) }
         )
         
         Screen.Register -> RegisterScreen(
@@ -1026,6 +1031,27 @@ fun AppNavigation() {
         Screen.FAQ -> FAQScreen(
             onBackClick = { navigateTo(Screen.HelpSupport) },
             onHomeClick = { navigateTo(Screen.Dashboard) }
+        )
+
+        Screen.AdminLogin -> AdminLoginScreen(
+            onBackClick = { navigateTo(Screen.Welcome) },
+            onLoginSuccess = {
+                sessionManager.saveAdminSession()
+                navigateTo(Screen.AdminDashboard)
+            }
+        )
+
+        Screen.AdminDashboard -> AdminDashboardScreen(
+            onLogoutClick = {
+                sessionManager.clearSession()
+                loggedInUserId = null
+                loggedInUserName = ""
+                userEmail = ""
+                userPhone = ""
+                userDob = ""
+                userGender = ""
+                navigateTo(Screen.AdminLogin)
+            }
         )
     }
 

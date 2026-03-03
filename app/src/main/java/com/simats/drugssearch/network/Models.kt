@@ -161,3 +161,72 @@ data class Drug(
     @SerializedName("safety_warnings") val safetyWarnings: String?,
     @SerializedName("storage_details") val storageDetails: String?
 )
+
+// Admin
+data class AdminStatsResponse(
+    @SerializedName("status") val status: String,
+    @SerializedName("stats") val stats: AdminStats?
+)
+
+data class AdminStats(
+    @SerializedName("total_users") val totalUsers: Int,
+    @SerializedName("total_reports") val totalReports: Int,
+    @SerializedName("total_drugs") val totalDrugs: Int,
+    @SerializedName("total_parameters") val totalParameters: Int
+)
+
+data class AdminUsersResponse(
+    @SerializedName("status") val status: String,
+    @SerializedName("users") val users: List<AdminUser>?
+)
+
+data class AdminUser(
+    @SerializedName("id") val id: Int,
+    @SerializedName("full_name") val fullName: String,
+    @SerializedName("email") val email: String,
+    @SerializedName("created_at") val createdAt: String,
+    @SerializedName("phone") val phone: String?
+)
+
+data class AdminReportsResponse(
+    @SerializedName("status") val status: String,
+    @SerializedName("reports") val reports: List<AdminReport>?
+)
+
+data class AdminReport(
+    @SerializedName("id") val id: Int,
+    @SerializedName("user_id") val userId: Int,
+    @SerializedName("file_name") val fileName: String,
+    @SerializedName("created_at") val createdAt: String,
+    @SerializedName("user_name") val userName: String?
+)
+
+data class AdminUserStatsResponse(
+    @SerializedName("status") val status: String,
+    @SerializedName("total_reports") val totalReports: Int,
+    @SerializedName("normal_values") val normalValues: Int,
+    @SerializedName("abnormal_values") val abnormalValues: Int
+)
+
+data class AddParameterRequest(
+    @SerializedName("parameter_name") val parameterName: String,
+    @SerializedName("unit") val unit: String,
+    @SerializedName("min_value") val minValue: Double,
+    @SerializedName("max_value") val maxValue: Double,
+    @SerializedName("category") val category: String,
+    @SerializedName("condition_if_abnormal") val conditionIfAbnormal: String = "",
+    @SerializedName("drug_category") val drugCategory: String = "",
+    @SerializedName("example_drugs") val exampleDrugs: String = ""
+)
+
+data class AddDrugRequest(
+    @SerializedName("drug_name") val drugName: String,
+    @SerializedName("generic_name") val genericName: String = "",
+    @SerializedName("drug_category") val drugCategory: String = "",
+    @SerializedName("indication") val indication: String = "",
+    @SerializedName("description") val description: String = "",
+    @SerializedName("common_dosage") val commonDosage: String = "",
+    @SerializedName("side_effects") val sideEffects: String = "",
+    @SerializedName("safety_warnings") val safetyWarnings: String = "",
+    @SerializedName("storage_details") val storageDetails: String = ""
+)

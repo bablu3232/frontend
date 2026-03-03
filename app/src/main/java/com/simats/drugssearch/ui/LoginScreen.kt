@@ -65,7 +65,8 @@ fun LoginScreen(
     onRegisterClick: () -> Unit = {},
     onPrivacyPolicyClick: () -> Unit = {},
     onTermsOfServiceClick: () -> Unit = {},
-    onContactUsClick: () -> Unit = {}
+    onContactUsClick: () -> Unit = {},
+    onAdminLoginClick: () -> Unit = {}
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -341,6 +342,13 @@ fun LoginScreen(
                         onClick = { 
                             emailError = null
                             apiError = null
+                            
+                            // Check for Admin Redirect
+                            if (email.trim().lowercase() == "admin") {
+                                onAdminLoginClick()
+                                return@Button
+                            }
+
                             if (!isValidEmail(email)) {
                                 emailError = "Please enter a valid email address"
                                 return@Button

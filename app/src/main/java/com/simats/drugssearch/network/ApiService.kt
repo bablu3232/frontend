@@ -73,6 +73,28 @@ interface ApiService {
 
     @POST("delete_account.php")
     suspend fun deleteAccount(@Body request: Map<String, Int>): Response<CommonResponse>
+
+    // Admin Endpoints
+    @POST("admin_login.php")
+    suspend fun adminLogin(@Body request: LoginRequest): Response<LoginResponse>
+
+    @GET("admin_stats.php")
+    suspend fun getAdminStats(): Response<AdminStatsResponse>
+
+    @GET("admin_users.php")
+    suspend fun getAdminUsers(): Response<AdminUsersResponse>
+
+    @GET("admin_reports.php")
+    suspend fun getAdminReports(): Response<AdminReportsResponse>
+
+    @POST("admin_add_parameter.php")
+    suspend fun adminAddParameter(@Body request: AddParameterRequest): Response<CommonResponse>
+
+    @POST("admin_add_drug.php")
+    suspend fun adminAddDrug(@Body request: AddDrugRequest): Response<CommonResponse>
+
+    @GET("admin_user_stats.php")
+    suspend fun getAdminUserStats(@Query("user_id") userId: Int): Response<AdminUserStatsResponse>
 }
 
 // RegisterRequest, RegisterResponse, LoginRequest, LoginResponse, UploadResponse are in Models.kt

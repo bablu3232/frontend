@@ -168,10 +168,10 @@ fun ProfileScreen(
                     AlertDialog(
                         onDismissRequest = { showLogoutDialog = false },
                         title = {
-                            Text(text = "Confirm Logout", fontWeight = FontWeight.Bold)
+                            Text(text = "Confirm Logout", fontWeight = FontWeight.Bold, color = Color.Black)
                         },
                         text = {
-                            Text("Are you sure you want to log out of your account?")
+                            Text("Are you sure you want to log out of your account?", color = Color.Black)
                         },
                         confirmButton = {
                             Button(

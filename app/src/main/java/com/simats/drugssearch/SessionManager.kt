@@ -18,6 +18,7 @@ class SessionManager(context: Context) {
         private const val KEY_IS_LOGGED_IN = "is_logged_in"
         private const val KEY_BIOMETRIC_ENABLED = "biometric_enabled"
         private const val KEY_TWO_FACTOR_ENABLED = "two_factor_enabled"
+        private const val KEY_IS_ADMIN_LOGGED_IN = "is_admin_logged_in"
     }
 
     fun saveSession(
@@ -58,6 +59,12 @@ class SessionManager(context: Context) {
     fun setTwoFactorEnabled(enabled: Boolean) {
         prefs.edit().putBoolean(KEY_TWO_FACTOR_ENABLED, enabled).apply()
     }
+
+    fun saveAdminSession() {
+        prefs.edit().putBoolean(KEY_IS_ADMIN_LOGGED_IN, true).apply()
+    }
+
+    fun isAdminLoggedIn(): Boolean = prefs.getBoolean(KEY_IS_ADMIN_LOGGED_IN, false)
 
     fun clearSession() {
         prefs.edit().clear().apply()

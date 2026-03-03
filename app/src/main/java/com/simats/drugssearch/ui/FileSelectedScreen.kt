@@ -58,6 +58,8 @@ import kotlinx.coroutines.withContext
 import com.simats.drugssearch.network.RetrofitClient
 import android.widget.Toast
 import com.simats.drugssearch.ui.theme.DrugsSearchTheme
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 
 // File Selected Screen Colors
 private val PrimaryBlue = Color(0xFF3B82F6)
@@ -151,24 +153,36 @@ fun FileSelectedScreen(
                 onHomeClick = onHomeClick
             )
 
-            // Dynamic Top Icon
-            Box(
+            // File Size Note
+            Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 16.dp),
-                contentAlignment = Alignment.Center
+                    .padding(horizontal = 24.dp, vertical = 12.dp)
+                    .border(1.dp, Color(0xFFBFDBFE), RoundedCornerShape(12.dp)),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFEFF6FF)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
-                Box(
+                Row(
                     modifier = Modifier
-                        .size(64.dp)
-                        .background(if (isFileUploaded) GreenBg else LightBlue, CircleShape),
-                    contentAlignment = Alignment.Center
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        imageVector = if (isFileUploaded) Icons.Default.CheckCircle else Icons.Default.Upload,
-                        contentDescription = if (isFileUploaded) "Uploaded" else "Upload",
-                        tint = if (isFileUploaded) GreenColor else PrimaryBlue,
-                        modifier = Modifier.size(32.dp)
+                        imageVector = Icons.Default.Info,
+                        contentDescription = null,
+                        tint = PrimaryBlue,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        text = "For faster scanning, preferably upload files less than 1 MB.",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            fontSize = 12.sp,
+                            lineHeight = 16.sp
+                        ),
+                        color = Color(0xFF1E40AF)
                     )
                 }
             }
@@ -377,8 +391,20 @@ fun FileSelectedScreen(
                             
                             CoroutineScope(Dispatchers.IO).launch {
                                 try {
-                                    val file = getFileFromUri(context, selectedFileUri!!, selectedFileName)
+                                    var file = getFileFromUri(context, selectedFileUri!!, selectedFileName)
                                     if (file != null) {
+                                        // Compress image files for faster OCR
+                                        val lowerName = selectedFileName.lowercase()
+                                        if (lowerName.endsWith(".jpg") || lowerName.endsWith(".jpeg") ||
+                                            lowerName.endsWith(".png") || lowerName.endsWith(".heic") ||
+                                            lowerName.endsWith(".heif")
+                                        ) {
+                                            val compressed = compressImageFile(context, file)
+                                            if (compressed != null) {
+                                                file = compressed
+                                            }
+                                        }
+                                        
                                         // Use Kotlin extension functions for OkHttp 4 compatibility
                                         val mediaType = "multipart/form-data".toMediaTypeOrNull()
                                         val requestFile = file.asRequestBody(mediaType)
@@ -471,8 +497,16 @@ fun FileSelectedScreen(
                                                 if (!hasError) {
                                                     withContext(Dispatchers.Main) {
                                                         isLoading = false
-                                                        Toast.makeText(context, "Analysis Complete!", Toast.LENGTH_SHORT).show()
-                                                        onUploadSuccess(values, category, recommendations, patientDetails, reportId)
+                                                        if (values.isEmpty()) {
+                                                            Toast.makeText(
+                                                                context,
+                                                                "No parameters could be extracted from this report. Please try a clearer image or use manual entry.",
+                                                                Toast.LENGTH_LONG
+                                                            ).show()
+                                                        } else {
+                                                            Toast.makeText(context, "Analysis Complete!", Toast.LENGTH_SHORT).show()
+                                                            onUploadSuccess(values, category, recommendations, patientDetails, reportId)
+                                                        }
                                                     }
                                                 }
                                             } else {
@@ -819,5 +853,45 @@ private fun getFileFromUri(context: Context, uri: Uri, originalName: String): Fi
     } catch (e: Exception) {
         e.printStackTrace()
         null
+    }
+}
+
+// Helper function to compress image files for faster OCR upload
+private fun compressImageFile(context: Context, originalFile: File): File? {
+    return try {
+        // Decode with inJustDecodeBounds first to get dimensions
+        val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeFile(originalFile.absolutePath, options)
+        
+        val origWidth = options.outWidth
+        val origHeight = options.outHeight
+        if (origWidth <= 0 || origHeight <= 0) return null
+        
+        // Calculate sample size to scale down to max 1500px
+        val maxDim = 1500
+        var sampleSize = 1
+        if (origWidth > maxDim || origHeight > maxDim) {
+            val halfWidth = origWidth / 2
+            val halfHeight = origHeight / 2
+            while ((halfWidth / sampleSize) >= maxDim || (halfHeight / sampleSize) >= maxDim) {
+                sampleSize *= 2
+            }
+        }
+        
+        // Decode the actual bitmap with sample size
+        val decodeOptions = BitmapFactory.Options().apply { inSampleSize = sampleSize }
+        val bitmap = BitmapFactory.decodeFile(originalFile.absolutePath, decodeOptions) ?: return null
+        
+        // Compress to JPEG 80% quality
+        val compressedFile = File(context.cacheDir, "compressed_${System.currentTimeMillis()}.jpg")
+        FileOutputStream(compressedFile).use { fos ->
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 80, fos)
+        }
+        bitmap.recycle()
+        
+        compressedFile
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null // Fall back to original file
     }
 }

@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Edit
@@ -27,6 +28,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -54,6 +56,9 @@ private val DisclaimerBackground = Color(0xFFF1F5F9)
 private val GreenColor = Color(0xFF22C55E)
 private val GreenBg = Color(0xFFDCFCE7)
 private val GreenBorder = Color(0xFF86EFAC)
+private val AmberColor = Color(0xFFF97316)
+private val AmberBg = Color(0xFFFFF7ED)
+private val AmberBorder = Color(0xFFFDBA74)
 
 @Composable
 fun ReviewValuesScreen(
@@ -89,6 +94,10 @@ fun ReviewValuesScreen(
     var patientAge by remember { mutableStateOf(initialPatientDetails?.age ?: "") }
     var patientGender by remember { mutableStateOf(initialPatientDetails?.gender ?: "") }
     var remarks by remember { mutableStateOf("") }
+
+    // Add Missing Parameter State
+    var newParamName by remember { mutableStateOf("") }
+    var newParamValue by remember { mutableStateOf("") }
 
     // Initialize/Reset editedValues when values or isEditing changes
     LaunchedEffect(values) {
@@ -240,7 +249,53 @@ fun ReviewValuesScreen(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // OCR Warning Note
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .border(1.dp, AmberBorder, RoundedCornerShape(12.dp)),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = AmberBg),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(14.dp),
+                            verticalAlignment = Alignment.Top
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Warning,
+                                contentDescription = null,
+                                tint = AmberColor,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    text = "Please Review Carefully",
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 13.sp
+                                    ),
+                                    color = Color(0xFF9A3412)
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "Some values extracted from your report may be inaccurate or missing. Please verify all parameters, edit any incorrect values, and add any missing ones below.",
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        fontSize = 12.sp,
+                                        lineHeight = 16.sp
+                                    ),
+                                    color = Color(0xFF9A3412).copy(alpha = 0.8f)
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     // Values Card
                     Card(
@@ -327,7 +382,15 @@ fun ReviewValuesScreen(
                                             modifier = Modifier
                                                 .weight(1f)
                                                 .padding(vertical = 8.dp),
-                                            singleLine = true
+                                            singleLine = true,
+                                            colors = OutlinedTextFieldDefaults.colors(
+                                                focusedTextColor = Color.Black,
+                                                unfocusedTextColor = Color.Black,
+                                                focusedContainerColor = Color.White,
+                                                unfocusedContainerColor = Color.White,
+                                                focusedLabelColor = PrimaryBlue,
+                                                unfocusedLabelColor = TextGrayColor
+                                            )
                                         )
                                         Spacer(modifier = Modifier.width(4.dp))
                                         IconButton(
@@ -370,6 +433,116 @@ fun ReviewValuesScreen(
                                         HorizontalDivider(color = CardBorderColor)
                                     }
                                 }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Add Missing Parameter Section
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .border(1.dp, CardBorderColor, RoundedCornerShape(16.dp)),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(20.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.Add,
+                                    contentDescription = null,
+                                    tint = PrimaryBlue,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "Add Missing Parameter",
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 16.sp
+                                    ),
+                                    color = TextDarkColor
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                OutlinedTextField(
+                                    value = newParamName,
+                                    onValueChange = { newParamName = it },
+                                    label = { Text("Parameter Name") },
+                                    modifier = Modifier.weight(1f),
+                                    singleLine = true,
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedTextColor = Color.Black,
+                                        unfocusedTextColor = Color.Black,
+                                        focusedContainerColor = Color.White,
+                                        unfocusedContainerColor = Color.White,
+                                        focusedLabelColor = PrimaryBlue,
+                                        unfocusedLabelColor = TextGrayColor
+                                    )
+                                )
+                                OutlinedTextField(
+                                    value = newParamValue,
+                                    onValueChange = { newParamValue = it },
+                                    label = { Text("Value") },
+                                    modifier = Modifier.weight(1f),
+                                    singleLine = true,
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedTextColor = Color.Black,
+                                        unfocusedTextColor = Color.Black,
+                                        focusedContainerColor = Color.White,
+                                        unfocusedContainerColor = Color.White,
+                                        focusedLabelColor = PrimaryBlue,
+                                        unfocusedLabelColor = TextGrayColor
+                                    ),
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            Button(
+                                onClick = {
+                                    val name = newParamName.trim()
+                                    val value = newParamValue.trim()
+                                    if (name.isNotEmpty() && value.isNotEmpty()) {
+                                        editedValues[name] = value
+                                        newParamName = ""
+                                        newParamValue = ""
+                                    }
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(44.dp),
+                                shape = RoundedCornerShape(10.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = PrimaryBlue.copy(alpha = 0.1f)
+                                )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Add,
+                                    contentDescription = null,
+                                    tint = PrimaryBlue,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "Add Parameter",
+                                    color = PrimaryBlue,
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 14.sp
+                                )
                             }
                         }
                     }
