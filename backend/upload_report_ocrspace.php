@@ -73,7 +73,7 @@ if (!file_exists($pythonPath)) {
     logDebug("Found python at $pythonPath");
 }
 
-$fileSize = filesize($filePath);
+$fileSize = filesize($_FILES["report"]["tmp_name"]);
 if ($fileSize < 1048576) {
     logDebug("File under 1MB ($fileSize bytes) -> OCRSpace");
     $scriptPath = __DIR__ . DIRECTORY_SEPARATOR . 'ocrspace_extract.py';
@@ -124,13 +124,71 @@ if (!empty($extracted_text)) {
     }
 }
 
-// Return OCR result directly — report will be saved only on "Submit for Analysis"
-logDebug("Returning OCR result without DB insert (deferred storage).");
-$conn->close();
 
-echo json_encode([
-    "status" => "success",
-    "report_id" => null,
-    "file_name" => $originalName,
-    "extracted_text" => $extracted_text
-]);
+// Enable error reporting for debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+$relativePath = $uploadDir . $uniqueName;
+logDebug("Relative Path: $relativePath");
+
+if (!isset($conn)) {
+    logDebug("Error: \$conn is not set!");
+    exit;
+}
+
+if ($conn->ping()) {
+    logDebug("DB Connection is alive.");
+} else {
+    logDebug("Error: DB Connection is closed: " . $conn->error);
+    // Reconnect if needed, or exit
+    include "db.php";
+}
+
+$sql = "INSERT INTO reports (user_id, file_name, file_path, mime_type, extracted_text) VALUES (?, ?, ?, ?, ?)";
+logDebug("Preparing Statement: $sql");
+
+
+try {
+    $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+        throw new Exception("Prepare failed: " . $conn->error);
+    }
+    logDebug("Statement Prepared.");
+
+    // Handle NULLs explicitly for binding if needed
+    $b_userId = $user_id;
+    $b_fileName = $originalName;
+    $b_filePath = $relativePath;
+    $b_mimeType = $mime_type;
+    $b_extractedText = $extracted_text;
+
+    logDebug("Binding Params...");
+    if (!$stmt->bind_param("issss", $b_userId, $b_fileName, $b_filePath, $b_mimeType, $b_extractedText)) {
+        throw new Exception("Bind Param Failed: " . $stmt->error);
+    }
+    logDebug("Params Bound.");
+
+    if (!$stmt->execute()) {
+        throw new Exception("Execute failed: " . $stmt->error);
+    }
+    logDebug("Database Insert Success. Report ID: " . $conn->insert_id);
+    
+    $report_id = (int) $conn->insert_id;
+    $stmt->close();
+    $conn->close();
+
+    echo json_encode([
+        "status" => "success",
+        "report_id" => $report_id,
+        "file_name" => $originalName,
+        "extracted_text" => $extracted_text
+    ]);
+
+} catch (Exception $e) {
+    logDebug("DB EXCEPTION: " . $e->getMessage());
+    echo json_encode(["status" => "error", "message" => "Database Error: " . $e->getMessage()]);
+    if (isset($stmt)) $stmt->close();
+    if (isset($conn)) $conn->close();
+    exit;
+}
