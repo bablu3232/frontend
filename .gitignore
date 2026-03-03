@@ -26,3 +26,5 @@ backend/*.png
 backend/*.jpg
 backend/*.jpeg
 backend/dbdb
+
+backend_repo/
