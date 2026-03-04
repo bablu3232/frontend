@@ -33,7 +33,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.simats.drugssearch.R
-import com.simats.drugssearch.ui.theme.drugssearchTheme
+import com.simats.drugssearch.ui.theme.DrugsSearchTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -821,7 +821,7 @@ fun RegisterScreen(
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun RegisterScreenPreview() {
-    drugssearchTheme {
+    DrugsSearchTheme {
         RegisterScreen()
     }
 }

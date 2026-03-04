@@ -35,7 +35,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.simats.drugssearch.ui.theme.drugssearchTheme
+import com.simats.drugssearch.ui.theme.DrugsSearchTheme
 
 // Risk Summary Screen Colors
 private val PrimaryBlue = Color(0xFF3B82F6)
@@ -621,7 +621,7 @@ private fun RiskSummaryBottomNav(
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun RiskSummaryScreenPreview() {
-    drugssearchTheme {
+    DrugsSearchTheme {
         RiskSummaryScreen(
             categoryName = "Blood Count"
         )

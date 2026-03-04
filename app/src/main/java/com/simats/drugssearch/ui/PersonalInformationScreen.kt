@@ -29,7 +29,7 @@ import androidx.compose.ui.unit.sp
 import com.simats.drugssearch.R
 import com.simats.drugssearch.network.RetrofitClient
 import com.simats.drugssearch.network.UpdateProfileRequest
-import com.simats.drugssearch.ui.theme.drugssearchTheme
+import com.simats.drugssearch.ui.theme.DrugsSearchTheme
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
@@ -451,7 +451,7 @@ private fun PersonalInformationTopBar(
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun PersonalInformationScreenPreview() {
-    drugssearchTheme {
+    DrugsSearchTheme {
         PersonalInformationScreen(userId = 1)
     }
 }

@@ -22,7 +22,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.simats.drugssearch.ui.theme.drugssearchTheme
+import com.simats.drugssearch.ui.theme.DrugsSearchTheme
 import com.simats.drugssearch.network.RetrofitClient
 import com.simats.drugssearch.network.ResetPasswordRequest
 import kotlinx.coroutines.launch
@@ -342,7 +342,7 @@ fun ResetPasswordScreen(
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun ResetPasswordScreenPreview() {
-    drugssearchTheme {
+    DrugsSearchTheme {
         ResetPasswordScreen(email = "test@example.com")
     }
 }

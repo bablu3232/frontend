@@ -29,7 +29,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.simats.drugssearch.ui.theme.drugssearchTheme
+import com.simats.drugssearch.ui.theme.DrugsSearchTheme
 
 // Colors matching DrugsSearch design system
 private val PrimaryBlue = Color(0xFF2196F3)
@@ -564,7 +564,7 @@ private fun ReportCard(
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun ReportHistoryScreenPreview() {
-    drugssearchTheme {
+    DrugsSearchTheme {
         ReportHistoryScreen(userId = 1)
     }
 }

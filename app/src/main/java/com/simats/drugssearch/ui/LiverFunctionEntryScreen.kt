@@ -34,7 +34,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.simats.drugssearch.ui.theme.drugssearchTheme
+import com.simats.drugssearch.ui.theme.DrugsSearchTheme
 
 // Liver Function Entry Screen Colors
 private val PrimaryBlue = Color(0xFF3B82F6)
@@ -581,7 +581,7 @@ private fun LiverFunctionBottomNav(
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun LiverFunctionEntryScreenPreview() {
-    drugssearchTheme {
+    DrugsSearchTheme {
         LiverFunctionEntryScreen()
     }
 }

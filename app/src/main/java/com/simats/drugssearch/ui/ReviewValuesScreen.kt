@@ -42,7 +42,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.*
 import kotlinx.coroutines.launch
-import com.simats.drugssearch.ui.theme.drugssearchTheme
+import com.simats.drugssearch.ui.theme.DrugsSearchTheme
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 
@@ -777,7 +777,7 @@ private fun ReviewValuesBottomNav(
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun ReviewValuesScreenPreview() {
-    drugssearchTheme {
+    DrugsSearchTheme {
         ReviewValuesScreen(userId = 1)
     }
 }

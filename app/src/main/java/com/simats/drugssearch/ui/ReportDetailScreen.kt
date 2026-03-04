@@ -27,7 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.simats.drugssearch.ui.theme.drugssearchTheme
+import com.simats.drugssearch.ui.theme.DrugsSearchTheme
 import com.simats.drugssearch.network.ReportParameter
 import android.graphics.pdf.PdfDocument
 import android.graphics.Paint
@@ -518,7 +518,7 @@ fun ReportDetailScreenPreview() {
             ReportParameter("Platelets", "250000", "/μL", true)
         )
     )
-    drugssearchTheme {
+    DrugsSearchTheme {
         ReportDetailScreen(report = sampleReport)
     }
 }

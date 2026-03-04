@@ -37,7 +37,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.simats.drugssearch.ui.theme.drugssearchTheme
+import com.simats.drugssearch.ui.theme.DrugsSearchTheme
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -653,7 +653,7 @@ private fun ReportAnalysisBottomNav(
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun ReportAnalysisScreenPreview() {
-    drugssearchTheme {
+    DrugsSearchTheme {
         ReportAnalysisScreen()
     }
 }

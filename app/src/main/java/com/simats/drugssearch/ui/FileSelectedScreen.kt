@@ -57,7 +57,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.simats.drugssearch.network.RetrofitClient
 import android.widget.Toast
-import com.simats.drugssearch.ui.theme.drugssearchTheme
+import com.simats.drugssearch.ui.theme.DrugsSearchTheme
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 
@@ -826,7 +826,7 @@ private fun FileSelectedBottomNav(
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun FileSelectedScreenPreview() {
-    drugssearchTheme {
+    DrugsSearchTheme {
         FileSelectedScreen()
     }
 }

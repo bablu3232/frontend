@@ -25,7 +25,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.simats.drugssearch.R
-import com.simats.drugssearch.ui.theme.drugssearchTheme
+import com.simats.drugssearch.ui.theme.DrugsSearchTheme
 import kotlinx.coroutines.delay
 
 @Composable
@@ -189,7 +189,7 @@ fun LoadingDot(alpha: Float) {
 @Preview(showBackground = true)
 @Composable
 fun SplashScreenPreview() {
-    drugssearchTheme {
+    DrugsSearchTheme {
         SplashScreen()
     }
 }
