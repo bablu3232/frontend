@@ -32,7 +32,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.simats.drugssearch.ui.theme.DrugsSearchTheme
+import com.simats.drugssearch.ui.theme.drugssearchTheme
 
 // Profile Screen Colors
 private val PrimaryBlue = Color(0xFF2196F3)
@@ -236,7 +236,7 @@ fun ProfileScreen(
 
                 // Copyright
                 Text(
-                    text = "© 2026 DrugSearch. All rights reserved.",
+                    text = "© 2026 DrugsSearch. All rights reserved.",
                     style = MaterialTheme.typography.bodySmall.copy(
                         fontSize = 12.sp
                     ),
@@ -289,7 +289,7 @@ private fun ProfileTopBar(
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = "DrugSearch",
+                text = "DrugsSearch",
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp
@@ -475,7 +475,7 @@ private fun ProfileMenuItem(
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun ProfileScreenPreview() {
-    DrugsSearchTheme {
+    drugssearchTheme {
         ProfileScreen()
     }
 }

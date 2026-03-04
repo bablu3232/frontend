@@ -33,9 +33,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.simats.drugssearch.ui.theme.DrugsSearchTheme
+import com.simats.drugssearch.ui.theme.drugssearchTheme
 
-// Colors matching DrugSearch design system
+// Colors matching DrugsSearch design system
 private val PrimaryBlue = Color(0xFF2196F3)
 private val BackgroundColor = Color(0xFFF8FAFC)
 private val TextDarkColor = Color(0xFF1E293B)
@@ -314,7 +314,7 @@ fun DrugSearchTopBar(
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = "DrugSearch",
+                text = "DrugsSearch",
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp
@@ -468,7 +468,7 @@ fun MedicalDisclaimerCard() {
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun SearchDrugInformationScreenPreview() {
-    DrugsSearchTheme {
+    drugssearchTheme {
         SearchDrugInformationScreen()
     }
 }

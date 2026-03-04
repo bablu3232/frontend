@@ -42,7 +42,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.*
 import kotlinx.coroutines.launch
-import com.simats.drugssearch.ui.theme.DrugsSearchTheme
+import com.simats.drugssearch.ui.theme.drugssearchTheme
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 
@@ -670,7 +670,7 @@ private fun ReviewValuesTopBar(
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = "DrugSearch",
+                text = "DrugsSearch",
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp
@@ -777,7 +777,7 @@ private fun ReviewValuesBottomNav(
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun ReviewValuesScreenPreview() {
-    DrugsSearchTheme {
+    drugssearchTheme {
         ReviewValuesScreen(userId = 1)
     }
 }

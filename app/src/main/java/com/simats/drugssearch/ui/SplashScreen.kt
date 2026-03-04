@@ -25,7 +25,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.simats.drugssearch.R
-import com.simats.drugssearch.ui.theme.DrugsSearchTheme
+import com.simats.drugssearch.ui.theme.drugssearchTheme
 import kotlinx.coroutines.delay
 
 @Composable
@@ -116,7 +116,7 @@ fun SplashScreen(
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.splash_logo),
-                    contentDescription = "DrugSearch Logo",
+                    contentDescription = "DrugsSearch Logo",
                     modifier = Modifier
                         .width(280.dp) // Fixed width to ensure prominence
                         .wrapContentHeight() // Height adapts to logo's aspect ratio
@@ -129,7 +129,7 @@ fun SplashScreen(
 
             // App Name
             Text(
-                text = "DrugSearch",
+                text = "DrugsSearch",
                 style = MaterialTheme.typography.displaySmall.copy(
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.5.sp
@@ -189,7 +189,7 @@ fun LoadingDot(alpha: Float) {
 @Preview(showBackground = true)
 @Composable
 fun SplashScreenPreview() {
-    DrugsSearchTheme {
+    drugssearchTheme {
         SplashScreen()
     }
 }

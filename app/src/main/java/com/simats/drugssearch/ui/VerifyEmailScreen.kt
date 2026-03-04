@@ -32,7 +32,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.simats.drugssearch.ui.theme.DrugsSearchTheme
+import com.simats.drugssearch.ui.theme.drugssearchTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -127,7 +127,7 @@ fun VerifyEmailScreen(
             // App Title
             Column {
                 Text(
-                    text = "DrugSearch",
+                    text = "DrugsSearch",
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp
@@ -489,7 +489,7 @@ fun VerifyEmailScreen(
 
             // Copyright
             Text(
-                text = "© 2026 DrugSearch. All rights reserved.",
+                text = "© 2026 DrugsSearch. All rights reserved.",
                 style = MaterialTheme.typography.bodySmall.copy(
                     fontSize = 12.sp
                 ),
@@ -561,7 +561,7 @@ private fun OtpInputField(
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun VerifyEmailScreenPreview() {
-    DrugsSearchTheme {
+    drugssearchTheme {
         VerifyEmailScreen(email = "test@example.com")
     }
 }

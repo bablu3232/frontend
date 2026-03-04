@@ -24,9 +24,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.simats.drugssearch.ui.theme.DrugsSearchTheme
+import com.simats.drugssearch.ui.theme.drugssearchTheme
 
-// Colors matching DrugSearch design system
+// Colors matching DrugsSearch design system
 private val PrimaryBlue = Color(0xFF2196F3)
 private val BackgroundColor = Color(0xFFF8FAFC)
 private val TextDarkColor = Color(0xFF1E293B)
@@ -157,7 +157,7 @@ private fun CompareTopBar(onBackClick: () -> Unit, onHomeClick: () -> Unit) {
             contentScale = ContentScale.Crop
         )
         Spacer(modifier = Modifier.width(4.dp))
-        Text("DrugSearch", fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+        Text("DrugsSearch", fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
         IconButton(onClick = onHomeClick) {
             Icon(Icons.Default.Home, contentDescription = "Home", tint = TextGrayColor)
         }

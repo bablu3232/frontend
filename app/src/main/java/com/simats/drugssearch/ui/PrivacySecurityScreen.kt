@@ -24,7 +24,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.simats.drugssearch.ui.theme.DrugsSearchTheme
+import com.simats.drugssearch.ui.theme.drugssearchTheme
 import com.simats.drugssearch.SessionManager
 import kotlinx.coroutines.launch
 
@@ -375,7 +375,7 @@ private fun SecurityToggleItem(
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun PrivacySecurityScreenPreview() {
-    DrugsSearchTheme {
+    drugssearchTheme {
         PrivacySecurityScreen()
     }
 }

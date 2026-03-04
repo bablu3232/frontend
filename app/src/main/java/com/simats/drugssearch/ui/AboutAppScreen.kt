@@ -30,7 +30,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.simats.drugssearch.ui.theme.DrugsSearchTheme
+import com.simats.drugssearch.ui.theme.drugssearchTheme
 
 private val PrimaryBlue = Color(0xFF2196F3)
 private val BackgroundColor = Color(0xFFF8FAFC)
@@ -81,7 +81,7 @@ fun AboutAppScreen(
 
                 // App Name & Version
                 Text(
-                    text = "DrugSearch",
+                    text = "DrugsSearch",
                     style = MaterialTheme.typography.headlineMedium.copy(
                         fontWeight = FontWeight.Bold,
                         fontSize = 24.sp
@@ -114,7 +114,7 @@ fun AboutAppScreen(
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         Text(
-                            text = "DrugSearch is your personal medical assistant designed to help you understand your health better. We provide easy-to-understand analysis of medical reports and comprehensive drug information.",
+                            text = "DrugsSearch is your personal medical assistant designed to help you understand your health better. We provide easy-to-understand analysis of medical reports and comprehensive drug information.",
                             style = MaterialTheme.typography.bodyMedium,
                             color = TextGrayColor,
                             textAlign = TextAlign.Start
@@ -253,7 +253,7 @@ private fun AboutAppTopBar(
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun AboutAppScreenPreview() {
-    DrugsSearchTheme {
+    drugssearchTheme {
         AboutAppScreen()
     }
 }

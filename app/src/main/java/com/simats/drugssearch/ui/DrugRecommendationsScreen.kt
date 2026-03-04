@@ -34,7 +34,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.simats.drugssearch.ui.theme.DrugsSearchTheme
+import com.simats.drugssearch.ui.theme.drugssearchTheme
 
 // Drug Recommendations Screen Colors
 private val PrimaryBlue = Color(0xFF3B82F6)
@@ -428,7 +428,7 @@ private fun DrugRecommendationsTopBar(
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = "DrugSearch",
+                text = "DrugsSearch",
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp
@@ -535,7 +535,7 @@ private fun DrugRecommendationsBottomNav(
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun DrugRecommendationsScreenPreview() {
-    DrugsSearchTheme {
+    drugssearchTheme {
         DrugRecommendationsScreen(categoryName = "Blood Count")
     }
 }

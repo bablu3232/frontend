@@ -33,7 +33,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.simats.drugssearch.R
-import com.simats.drugssearch.ui.theme.DrugsSearchTheme
+import com.simats.drugssearch.ui.theme.drugssearchTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -152,7 +152,7 @@ fun RegisterScreen(
             // App Title
             Column {
                 Text(
-                    text = "DrugSearch",
+                    text = "DrugsSearch",
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp
@@ -804,7 +804,7 @@ fun RegisterScreen(
 
             // Copyright
             Text(
-                text = "© 2026 DrugSearch. All rights reserved.",
+                text = "© 2026 DrugsSearch. All rights reserved.",
                 style = MaterialTheme.typography.bodySmall.copy(
                     fontSize = 12.sp
                 ),
@@ -821,7 +821,7 @@ fun RegisterScreen(
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun RegisterScreenPreview() {
-    DrugsSearchTheme {
+    drugssearchTheme {
         RegisterScreen()
     }
 }

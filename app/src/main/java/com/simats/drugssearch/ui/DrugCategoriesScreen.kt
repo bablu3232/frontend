@@ -19,7 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.simats.drugssearch.ui.theme.DrugsSearchTheme
+import com.simats.drugssearch.ui.theme.drugssearchTheme
 
 // Colors
 private val PrimaryBlue = Color(0xFF2196F3)
@@ -231,7 +231,7 @@ private fun CategoryCard(
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun DrugCategoriesScreenPreview() {
-    DrugsSearchTheme {
+    drugssearchTheme {
         DrugCategoriesScreen()
     }
 }
