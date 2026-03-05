@@ -10,6 +10,8 @@ function ForgotPasswordPage({ onNavigate }) {
     const [error, setError] = React.useState('');
     const [success, setSuccess] = React.useState('');
     const [loading, setLoading] = React.useState(false);
+    const [showNew, setShowNew] = React.useState(false);
+    const [showConfirm, setShowConfirm] = React.useState(false);
 
     const requestOtp = async (e) => {
         e.preventDefault(); setError(''); setLoading(true);
@@ -42,6 +44,8 @@ function ForgotPasswordPage({ onNavigate }) {
         } catch (err) { setError(err.response?.data?.message || 'Reset failed'); }
         setLoading(false);
     };
+
+    const eyeStyle = { position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '20px', userSelect: 'none' };
 
     return (
         <div className="auth-container">
@@ -80,11 +84,17 @@ function ForgotPasswordPage({ onNavigate }) {
                         <form onSubmit={resetPassword}>
                             <div className="form-group">
                                 <label className="form-label">New Password</label>
-                                <input className="form-input" type="password" placeholder="Enter new password" value={newPass} onChange={e => setNewPass(e.target.value)} />
+                                <div style={{ position: 'relative' }}>
+                                    <input className="form-input" type={showNew ? 'text' : 'password'} placeholder="Enter new password" value={newPass} onChange={e => setNewPass(e.target.value)} style={{ paddingRight: '44px' }} />
+                                    <span className="material-icons-outlined" onClick={() => setShowNew(!showNew)} style={eyeStyle}>{showNew ? 'visibility' : 'visibility_off'}</span>
+                                </div>
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Confirm Password</label>
-                                <input className="form-input" type="password" placeholder="Confirm new password" value={confirmPass} onChange={e => setConfirmPass(e.target.value)} />
+                                <div style={{ position: 'relative' }}>
+                                    <input className="form-input" type={showConfirm ? 'text' : 'password'} placeholder="Confirm new password" value={confirmPass} onChange={e => setConfirmPass(e.target.value)} style={{ paddingRight: '44px' }} />
+                                    <span className="material-icons-outlined" onClick={() => setShowConfirm(!showConfirm)} style={eyeStyle}>{showConfirm ? 'visibility' : 'visibility_off'}</span>
+                                </div>
                             </div>
                             <button className="btn btn-primary btn-full btn-lg" type="submit" disabled={loading}>
                                 {loading ? 'Resetting...' : 'Reset Password'}
