@@ -28,3 +28,5 @@ backend/*.jpeg
 backend/dbdb
 
 backend_repo/
+
+webapp/
