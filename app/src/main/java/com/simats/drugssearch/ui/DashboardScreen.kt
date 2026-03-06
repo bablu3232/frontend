@@ -34,6 +34,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.simats.drugssearch.ui.theme.DrugsSearchTheme
+import com.simats.drugssearch.network.UserReport
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 
 // Dashboard Colors
 private val PrimaryBlue = Color(0xFF3B82F6)
@@ -59,6 +63,7 @@ fun DashboardScreen(
     totalReports: Int = 0,
     normalReports: Int = 0,
     abnormalReports: Int = 0,
+    recentReports: List<UserReport> = emptyList(),
     onUploadClick: () -> Unit = {},
     onSearchClick: () -> Unit = {},
     onHistoryClick: () -> Unit = {},
@@ -239,56 +244,84 @@ fun DashboardScreen(
                     
                     Spacer(modifier = Modifier.height(16.dp))
                     
-                    // Activity Item
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .border(1.dp, CardBorderColor, RoundedCornerShape(16.dp)),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-                    ) {
-                        Row(
+                    // Activity Items — show recent reports or placeholder
+                    if (recentReports.isEmpty()) {
+                        Card(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                                .border(1.dp, CardBorderColor, RoundedCornerShape(16.dp)),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(48.dp)
-                                    .background(SearchBg, RoundedCornerShape(12.dp)),
-                                contentAlignment = Alignment.Center
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Icon(
-                                    imageVector = Icons.Outlined.Description,
-                                    contentDescription = "Report",
-                                    tint = SearchIcon
-                                )
+                                Box(
+                                    modifier = Modifier.size(48.dp).background(SearchBg, RoundedCornerShape(12.dp)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(Icons.Outlined.Description, contentDescription = "Report", tint = SearchIcon)
+                                }
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text("No reports yet", style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold), color = TextDarkColor)
+                                    Text("Upload your first report to get started", style = MaterialTheme.typography.bodySmall, color = TextGrayColor)
+                                }
                             }
-                            
-                            Spacer(modifier = Modifier.width(16.dp))
-                            
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = "Blood Test Results",
-                                    style = MaterialTheme.typography.bodyLarge.copy(
-                                        fontWeight = FontWeight.SemiBold
-                                    ),
-                                    color = TextDarkColor
-                                )
-                                Text(
-                                    text = "All values normal",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = TextGrayColor
-                                )
+                        }
+                    } else {
+                        recentReports.forEachIndexed { index, report ->
+                            val statusText = if (report.isNormal) "All values normal" else "${report.abnormalCount} abnormal value${if (report.abnormalCount > 1) "s" else ""}"
+                            val statusColor = if (report.isNormal) Color(0xFF10B981) else Color(0xFFEF4444)
+                            val bgColor = if (report.isNormal) SearchBg else Color(0xFFFFE4E4)
+                            val iconColor = if (report.isNormal) SearchIcon else Color(0xFFEF4444)
+                            val relativeDate = try {
+                                val reportDate = LocalDate.parse(report.date, DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+                                val days = ChronoUnit.DAYS.between(reportDate, LocalDate.now())
+                                when {
+                                    days == 0L -> "Today"
+                                    days == 1L -> "Yesterday"
+                                    days < 7L -> "$days days ago"
+                                    days < 30L -> "${days / 7} week${if (days / 7 > 1) "s" else ""} ago"
+                                    else -> "${days / 30} month${if (days / 30 > 1) "s" else ""} ago"
+                                }
+                            } catch (_: Exception) { report.date }
+
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .border(1.dp, CardBorderColor, RoundedCornerShape(16.dp)),
+                                shape = RoundedCornerShape(16.dp),
+                                colors = CardDefaults.cardColors(containerColor = Color.White),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Box(
+                                        modifier = Modifier.size(48.dp).background(bgColor, RoundedCornerShape(12.dp)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(Icons.Outlined.Description, contentDescription = "Report", tint = iconColor)
+                                    }
+                                    Spacer(modifier = Modifier.width(16.dp))
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = report.category.ifBlank { "Lab Report" },
+                                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
+                                            color = TextDarkColor
+                                        )
+                                        Text(text = statusText, style = MaterialTheme.typography.bodySmall, color = statusColor)
+                                    }
+                                    Text(text = relativeDate, style = MaterialTheme.typography.bodySmall, color = TextGrayColor)
+                                }
                             }
-                            
-                            Text(
-                                text = "2 days ago",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = TextGrayColor
-                            )
+                            if (index < recentReports.size - 1) {
+                                Spacer(modifier = Modifier.height(12.dp))
+                            }
                         }
                     }
 

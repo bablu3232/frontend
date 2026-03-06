@@ -230,3 +230,35 @@ data class AddDrugRequest(
     @SerializedName("safety_warnings") val safetyWarnings: String = "",
     @SerializedName("storage_details") val storageDetails: String = ""
 )
+
+// Delete
+data class DeleteItemRequest(
+    @SerializedName("id") val id: Int
+)
+
+data class AdminParametersResponse(
+    @SerializedName("status") val status: String,
+    @SerializedName("parameters") val parameters: List<AdminParameterItem>?
+)
+
+data class AdminParameterItem(
+    @SerializedName("id") val id: Int,
+    @SerializedName("parameter_name") val parameterName: String,
+    @SerializedName("unit") val unit: String,
+    @SerializedName("min_value") val minValue: String?,
+    @SerializedName("max_value") val maxValue: String?,
+    @SerializedName("category") val category: String?
+)
+
+data class AdminDrugsResponse(
+    @SerializedName("status") val status: String,
+    @SerializedName("drugs") val drugs: List<AdminDrugItem>?
+)
+
+data class AdminDrugItem(
+    @SerializedName("id") val id: Int,
+    @SerializedName("drug_name") val drugName: String,
+    @SerializedName("generic_name") val genericName: String?,
+    @SerializedName("drug_category") val drugCategory: String?
+)
+

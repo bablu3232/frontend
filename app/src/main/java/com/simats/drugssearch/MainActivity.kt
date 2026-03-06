@@ -210,6 +210,7 @@ fun AppNavigation() {
     var dashboardTotalReports by remember { mutableStateOf(0) }
     var dashboardNormalReports by remember { mutableStateOf(0) }
     var dashboardAbnormalReports by remember { mutableStateOf(0) }
+    var recentReports by remember { mutableStateOf<List<com.simats.drugssearch.network.UserReport>>(emptyList()) }
 
     // Fetch dashboard stats when user logs in or returns to key screens
     LaunchedEffect(loggedInUserId, currentScreen) {
@@ -223,6 +224,7 @@ fun AppNavigation() {
                         dashboardTotalReports = reports.size
                         dashboardNormalReports = reports.count { it.isNormal }
                         dashboardAbnormalReports = reports.count { !it.isNormal }
+                        recentReports = reports.sortedByDescending { it.date }.take(2)
                     }
                 } catch (_: Exception) {
                     // Silently fail — stats stay at 0
@@ -353,6 +355,7 @@ fun AppNavigation() {
             totalReports = dashboardTotalReports,
             normalReports = dashboardNormalReports,
             abnormalReports = dashboardAbnormalReports,
+            recentReports = recentReports,
             onUploadClick = { navigateTo(Screen.Upload) },
             onSearchClick = { navigateTo(Screen.SearchDrugInformation) },
             onHistoryClick = { navigateTo(Screen.ReportHistory) },

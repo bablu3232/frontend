@@ -49,7 +49,7 @@ function Sidebar({ currentPage, onNavigate, onLogout, sidebarOpen, onCloseSideba
                     ))}
                     <div
                         className="sidebar-nav-item"
-                        onClick={onLogout}
+                        onClick={() => { if (window.confirm('Are you sure you want to logout?')) onLogout(); }}
                         style={{ color: '#EF4444', marginTop: '8px' }}
                     >
                         <span className="material-icons-outlined">logout</span>

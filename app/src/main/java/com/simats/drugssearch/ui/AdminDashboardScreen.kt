@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.Assessment
 import androidx.compose.material.icons.filled.Medication
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -33,6 +34,9 @@ import com.simats.drugssearch.network.AdminUser
 import com.simats.drugssearch.network.AdminReport
 import com.simats.drugssearch.network.AddParameterRequest
 import com.simats.drugssearch.network.AddDrugRequest
+import com.simats.drugssearch.network.DeleteItemRequest
+import com.simats.drugssearch.network.AdminParameterItem
+import com.simats.drugssearch.network.AdminDrugItem
 
 private val AdminPrimary = Color(0xFF1E293B)
 private val BackgroundColor = Color(0xFFF8FAFC)
@@ -53,6 +57,25 @@ fun AdminDashboardScreen(
     var reports by remember { mutableStateOf<List<AdminReport>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var selectedTab by remember { mutableStateOf(0) } // 0 = Overview, 1 = Users, 2 = Edit
+    var showLogoutDialog by remember { mutableStateOf(false) }
+
+    // Logout confirmation dialog
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            title = { Text("Logout") },
+            text = { Text("Are you sure you want to logout?") },
+            confirmButton = {
+                Button(
+                    onClick = { showLogoutDialog = false; onLogoutClick() },
+                    colors = ButtonDefaults.buttonColors(containerColor = RedColor)
+                ) { Text("Logout", color = Color.White) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutDialog = false }) { Text("Cancel") }
+            }
+        )
+    }
 
     LaunchedEffect(Unit) {
         scope.launch(Dispatchers.IO) {
@@ -79,7 +102,7 @@ fun AdminDashboardScreen(
                 title = { Text("Admin Dashboard", color = Color.White, fontWeight = FontWeight.Bold) },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = AdminPrimary),
                 actions = {
-                    IconButton(onClick = onLogoutClick) {
+                    IconButton(onClick = { showLogoutDialog = true }) {
                         Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = "Logout", tint = Color.White)
                     }
                 }
@@ -282,7 +305,7 @@ fun AdminEditTab() {
     val scope = rememberCoroutineScope()
     var expandedForm by remember { mutableStateOf<String?>(null) }
 
-    // Lab Parameter fields (8 columns)
+    // Lab Parameter fields
     var paramName by remember { mutableStateOf("") }
     var paramUnit by remember { mutableStateOf("") }
     var paramMin by remember { mutableStateOf("") }
@@ -295,7 +318,7 @@ fun AdminEditTab() {
     var paramLoading by remember { mutableStateOf(false) }
     var paramMessage by remember { mutableStateOf<String?>(null) }
 
-    // Drug fields (9 columns)
+    // Drug fields
     var drugName by remember { mutableStateOf("") }
     var genericName by remember { mutableStateOf("") }
     var drugCategory by remember { mutableStateOf("") }
@@ -307,6 +330,70 @@ fun AdminEditTab() {
     var storageDetails by remember { mutableStateOf("") }
     var drugLoading by remember { mutableStateOf(false) }
     var drugMessage by remember { mutableStateOf<String?>(null) }
+
+    // Delete lists
+    var paramList by remember { mutableStateOf<List<AdminParameterItem>>(emptyList()) }
+    var drugsList by remember { mutableStateOf<List<AdminDrugItem>>(emptyList()) }
+    var paramSearchQuery by remember { mutableStateOf("") }
+    var drugSearchQuery by remember { mutableStateOf("") }
+    var paramSortBy by remember { mutableStateOf("name") }
+    var drugSortBy by remember { mutableStateOf("name") }
+    var deleteConfirmItem by remember { mutableStateOf<Pair<String, Pair<Int, String>>?>(null) } // type to (id, name)
+
+    // Fetch lists on load
+    LaunchedEffect(Unit) {
+        scope.launch(Dispatchers.IO) {
+            try {
+                val pRes = RetrofitClient.instance.getAdminParameters()
+                val dRes = RetrofitClient.instance.getAdminDrugs()
+                withContext(Dispatchers.Main) {
+                    if (pRes.isSuccessful) paramList = pRes.body()?.parameters ?: emptyList()
+                    if (dRes.isSuccessful) drugsList = dRes.body()?.drugs ?: emptyList()
+                }
+            } catch (_: Exception) {}
+        }
+    }
+
+    // Delete confirmation dialog
+    if (deleteConfirmItem != null) {
+        val (type, idName) = deleteConfirmItem!!
+        val (id, name) = idName
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { deleteConfirmItem = null },
+            title = { Text("Delete ${if (type == "param") "Parameter" else "Drug"}") },
+            text = { Text("Are you sure you want to delete \"$name\"? This cannot be undone.") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        deleteConfirmItem = null
+                        scope.launch(Dispatchers.IO) {
+                            try {
+                                val res = if (type == "param")
+                                    RetrofitClient.instance.adminDeleteParameter(DeleteItemRequest(id))
+                                else
+                                    RetrofitClient.instance.adminDeleteDrug(DeleteItemRequest(id))
+                                withContext(Dispatchers.Main) {
+                                    if (res.isSuccessful) {
+                                        if (type == "param") {
+                                            paramList = paramList.filter { it.id != id }
+                                            paramMessage = "\"$name\" deleted"
+                                        } else {
+                                            drugsList = drugsList.filter { it.id != id }
+                                            drugMessage = "\"$name\" deleted"
+                                        }
+                                    }
+                                }
+                            } catch (_: Exception) {}
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = RedColor)
+                ) { Text("Delete", color = Color.White) }
+            },
+            dismissButton = {
+                TextButton(onClick = { deleteConfirmItem = null }) { Text("Cancel") }
+            }
+        )
+    }
 
     Column(
         modifier = Modifier
@@ -346,7 +433,7 @@ fun AdminEditTab() {
                     Spacer(modifier = Modifier.height(8.dp))
 
                     if (paramMessage != null) {
-                        Text(paramMessage!!, color = if (paramMessage!!.contains("success", true)) GreenColor else RedColor, fontSize = 13.sp)
+                        Text(paramMessage!!, color = if (paramMessage!!.contains("success", true) || paramMessage!!.contains("deleted", true)) GreenColor else RedColor, fontSize = 13.sp)
                         Spacer(modifier = Modifier.height(8.dp))
                     }
 
@@ -371,8 +458,11 @@ fun AdminEditTab() {
                                         exampleDrugs = paramExampleDrugs.trim()
                                     )
                                     val response = RetrofitClient.instance.adminAddParameter(req)
+                                    // Refresh list
+                                    val pRes = RetrofitClient.instance.getAdminParameters()
                                     withContext(Dispatchers.Main) {
                                         paramLoading = false
+                                        if (pRes.isSuccessful) paramList = pRes.body()?.parameters ?: emptyList()
                                         paramMessage = if (response.isSuccessful) {
                                             paramName = ""; paramUnit = ""; paramMin = ""; paramMax = ""
                                             paramCategory = ""; paramCondition = ""; paramDrugCategory = ""; paramExampleDrugs = ""; paramSummary = ""
@@ -394,6 +484,83 @@ fun AdminEditTab() {
                     ) {
                         if (paramLoading) CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                         else Text("Add Parameter", color = Color.White, fontWeight = FontWeight.SemiBold)
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // ─── Delete Parameters (Expandable) ───
+        Card(
+            modifier = Modifier.fillMaxWidth().clickable { expandedForm = if (expandedForm == "delete-param") null else "delete-param" },
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Delete, contentDescription = null, tint = RedColor, modifier = Modifier.size(28.dp))
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text("Delete Parameters (${paramList.size})", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextDarkColor)
+                }
+
+                if (expandedForm == "delete-param") {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = paramSearchQuery, onValueChange = { paramSearchQuery = it },
+                        placeholder = { Text("Search parameters...") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        shape = RoundedCornerShape(10.dp),
+                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = AdminPrimary, unfocusedBorderColor = Color(0xFFE2E8F0), cursorColor = AdminPrimary)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    // Sort chips
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf("Name" to "name", "Unit" to "unit", "Category" to "category").forEach { (label, key) ->
+                            FilterChip(
+                                selected = paramSortBy == key,
+                                onClick = { paramSortBy = key },
+                                label = { Text(label, fontSize = 12.sp) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = AdminPrimary,
+                                    selectedLabelColor = Color.White
+                                )
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    if (paramMessage != null) {
+                        Text(paramMessage!!, color = if (paramMessage!!.contains("deleted", true)) GreenColor else RedColor, fontSize = 13.sp)
+                        Spacer(modifier = Modifier.height(4.dp))
+                    }
+
+                    val filteredParams = paramList
+                        .filter { it.parameterName.contains(paramSearchQuery, ignoreCase = true) }
+                        .sortedBy { when (paramSortBy) { "unit" -> it.unit; "category" -> it.category ?: ""; else -> it.parameterName } }
+
+                    Box(modifier = Modifier.fillMaxWidth().heightIn(max = 350.dp)) {
+                        Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                            filteredParams.forEach { p ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(p.parameterName, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = TextDarkColor)
+                                        Text("${p.unit} | ${p.minValue ?: ""} - ${p.maxValue ?: ""} | ${p.category ?: ""}", fontSize = 12.sp, color = TextGrayColor)
+                                    }
+                                    IconButton(onClick = { deleteConfirmItem = Pair("param", Pair(p.id, p.parameterName)) }) {
+                                        Icon(Icons.Default.Delete, contentDescription = "Delete", tint = RedColor, modifier = Modifier.size(22.dp))
+                                    }
+                                }
+                                HorizontalDivider(color = Color(0xFFF1F5F9))
+                            }
+                            if (filteredParams.isEmpty()) {
+                                Text("No parameters found", color = TextGrayColor, fontSize = 13.sp, modifier = Modifier.padding(vertical = 8.dp))
+                            }
+                        }
                     }
                 }
             }
@@ -430,7 +597,7 @@ fun AdminEditTab() {
                     Spacer(modifier = Modifier.height(8.dp))
 
                     if (drugMessage != null) {
-                        Text(drugMessage!!, color = if (drugMessage!!.contains("success", true)) GreenColor else RedColor, fontSize = 13.sp)
+                        Text(drugMessage!!, color = if (drugMessage!!.contains("success", true) || drugMessage!!.contains("deleted", true)) GreenColor else RedColor, fontSize = 13.sp)
                         Spacer(modifier = Modifier.height(8.dp))
                     }
 
@@ -456,8 +623,10 @@ fun AdminEditTab() {
                                         storageDetails = storageDetails.trim()
                                     )
                                     val response = RetrofitClient.instance.adminAddDrug(req)
+                                    val dRes = RetrofitClient.instance.getAdminDrugs()
                                     withContext(Dispatchers.Main) {
                                         drugLoading = false
+                                        if (dRes.isSuccessful) drugsList = dRes.body()?.drugs ?: emptyList()
                                         drugMessage = if (response.isSuccessful) {
                                             drugName = ""; genericName = ""; drugCategory = ""; indication = ""
                                             commonDosage = ""; drugDescription = ""; sideEffects = ""; safetyWarnings = ""; storageDetails = ""
@@ -483,6 +652,85 @@ fun AdminEditTab() {
                 }
             }
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // ─── Delete Drugs (Expandable) ───
+        Card(
+            modifier = Modifier.fillMaxWidth().clickable { expandedForm = if (expandedForm == "delete-drug") null else "delete-drug" },
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Delete, contentDescription = null, tint = RedColor, modifier = Modifier.size(28.dp))
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text("Delete Drugs (${drugsList.size})", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextDarkColor)
+                }
+
+                if (expandedForm == "delete-drug") {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = drugSearchQuery, onValueChange = { drugSearchQuery = it },
+                        placeholder = { Text("Search drugs...") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        shape = RoundedCornerShape(10.dp),
+                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = AdminPrimary, unfocusedBorderColor = Color(0xFFE2E8F0), cursorColor = AdminPrimary)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    // Sort chips
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf("Name" to "name", "Generic" to "generic", "Category" to "category").forEach { (label, key) ->
+                            FilterChip(
+                                selected = drugSortBy == key,
+                                onClick = { drugSortBy = key },
+                                label = { Text(label, fontSize = 12.sp) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = AdminPrimary,
+                                    selectedLabelColor = Color.White
+                                )
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    if (drugMessage != null) {
+                        Text(drugMessage!!, color = if (drugMessage!!.contains("deleted", true)) GreenColor else RedColor, fontSize = 13.sp)
+                        Spacer(modifier = Modifier.height(4.dp))
+                    }
+
+                    val filteredDrugs = drugsList
+                        .filter { it.drugName.contains(drugSearchQuery, ignoreCase = true) }
+                        .sortedBy { when (drugSortBy) { "generic" -> it.genericName ?: ""; "category" -> it.drugCategory ?: ""; else -> it.drugName } }
+
+                    Box(modifier = Modifier.fillMaxWidth().heightIn(max = 350.dp)) {
+                        Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                            filteredDrugs.forEach { d ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(d.drugName, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = TextDarkColor)
+                                        Text("${d.genericName ?: "-"} | ${d.drugCategory ?: "-"}", fontSize = 12.sp, color = TextGrayColor)
+                                    }
+                                    IconButton(onClick = { deleteConfirmItem = Pair("drug", Pair(d.id, d.drugName)) }) {
+                                        Icon(Icons.Default.Delete, contentDescription = "Delete", tint = RedColor, modifier = Modifier.size(22.dp))
+                                    }
+                                }
+                                HorizontalDivider(color = Color(0xFFF1F5F9))
+                            }
+                            if (filteredDrugs.isEmpty()) {
+                                Text("No drugs found", color = TextGrayColor, fontSize = 13.sp, modifier = Modifier.padding(vertical = 8.dp))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
     }
 }
 

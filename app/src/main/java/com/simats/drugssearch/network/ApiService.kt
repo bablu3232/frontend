@@ -93,6 +93,18 @@ interface ApiService {
     @POST("admin_add_drug.php")
     suspend fun adminAddDrug(@Body request: AddDrugRequest): Response<CommonResponse>
 
+    @POST("admin_delete_parameter.php")
+    suspend fun adminDeleteParameter(@Body request: DeleteItemRequest): Response<CommonResponse>
+
+    @POST("admin_delete_drug.php")
+    suspend fun adminDeleteDrug(@Body request: DeleteItemRequest): Response<CommonResponse>
+
+    @GET("web_admin_parameters.php")
+    suspend fun getAdminParameters(): Response<AdminParametersResponse>
+
+    @GET("web_admin_drugs.php")
+    suspend fun getAdminDrugs(): Response<AdminDrugsResponse>
+
     @GET("admin_user_stats.php")
     suspend fun getAdminUserStats(@Query("user_id") userId: Int): Response<AdminUserStatsResponse>
 }
