@@ -169,8 +169,14 @@ fun ForgotPasswordScreen(
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = Color.Black,
                     unfocusedTextColor = Color.Black,
+                    disabledTextColor = Color.Black.copy(alpha = 0.6f),
                     focusedBorderColor = if (emailError != null) ErrorColor else PrimaryBlue,
                     unfocusedBorderColor = if (emailError != null) ErrorColor else InputBorderColor,
+                    disabledBorderColor = InputBorderColor,
+                    disabledLeadingIconColor = TextGrayColor.copy(alpha = 0.6f),
+                    disabledTrailingIconColor = TextGrayColor.copy(alpha = 0.6f),
+                    disabledLabelColor = TextGrayColor.copy(alpha = 0.6f),
+                    disabledPlaceholderColor = TextGrayColor.copy(alpha = 0.6f),
                     cursorColor = PrimaryBlue
                 ),
                 singleLine = true,
@@ -228,7 +234,9 @@ fun ForgotPasswordScreen(
                     .height(52.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = PrimaryBlue
+                    containerColor = PrimaryBlue,
+                    disabledContainerColor = PrimaryBlue.copy(alpha = 0.6f),
+                    disabledContentColor = Color.White
                 ),
                 enabled = !isLoading
             ) {

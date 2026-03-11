@@ -53,7 +53,7 @@ data class HealthReport(
     val abnormalCount: Int = 0,
     val parameters: List<com.simats.drugssearch.network.ReportParameter> = emptyList(),
     val patientName: String? = null,
-    val patientAge: Int? = null,
+    val patientAge: String? = null,
     val patientGender: String? = null
 )
 

@@ -13,9 +13,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -27,6 +26,7 @@ import androidx.compose.ui.unit.sp
 import com.simats.drugssearch.R
 import com.simats.drugssearch.ui.theme.DrugsSearchTheme
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun SplashScreen(
@@ -70,32 +70,53 @@ fun SplashScreen(
     LaunchedEffect(Unit) {
         alphaAnim.animateTo(1f, animationSpec = tween(1000))
         scaleAnim.animateTo(1f, animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy))
-        delay(2500)
+        delay(2000) // Give the user time to see the logo
+        // Final snappy scale up pop and fade out for seamless dashboard transition
+        // We run these in parallel so the pulse and fade happen together
+        val job1 = launch {
+            scaleAnim.animateTo(
+                targetValue = 1.3f, 
+                animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing)
+            )
+        }
+        val job2 = launch {
+            alphaAnim.animateTo(
+                targetValue = 0f, 
+                animationSpec = tween(durationMillis = 400, easing = LinearEasing)
+            )
+        }
+        
+        // Wait for both animations to finish
+        job1.join()
+        job2.join()
+        
         onSplashComplete()
     }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF0A0A0A)),
+            .background(Color.White),
         contentAlignment = Alignment.Center
     ) {
-        // Soft Yellow Glow Gradient in the background
+        // Subtle Background Decorative Elements
         Box(
-            modifier = Modifier
-                .size(450.dp)
-                .offset(y = (-80).dp)
-                .blur(100.dp)
-                .background(
-                    Brush.radialGradient(
-                        colors = listOf(
-                            Color(0xFFFFB800).copy(alpha = 0.15f),
-                            Color(0xFFFFB800).copy(alpha = 0.05f),
-                            Color.Transparent
+            modifier = Modifier.fillMaxSize()
+        ) {
+            // Faint Molecule-like dots/lines for a medical feel
+            repeat(5) { index ->
+                Box(
+                    modifier = Modifier
+                        .size(200.dp)
+                        .offset(
+                            x = (30 + index * 60).dp,
+                            y = (50 + index * 100).dp
                         )
-                    )
+                        .alpha(0.03f)
+                        .background(Color.LightGray, shape = RoundedCornerShape(50))
                 )
-        )
+            }
+        }
 
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -105,54 +126,31 @@ fun SplashScreen(
                 .alpha(alphaAnim.value)
                 .scale(scaleAnim.value)
         ) {
-            // Refined Logo Container - Tightly wrapping the logo based on its dimensions
+            // Logo Container
             Card(
                 modifier = Modifier
                     .wrapContentSize()
-                    .padding(horizontal = 32.dp),
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF121212)),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                    .padding(horizontal = 24.dp),
+                shape = RoundedCornerShape(32.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.splash_logo),
+                    painter = painterResource(id = R.drawable.logo1),
                     contentDescription = "DrugsSearch Logo",
                     modifier = Modifier
-                        .width(280.dp) // Fixed width to ensure prominence
-                        .wrapContentHeight() // Height adapts to logo's aspect ratio
-                        .padding(12.dp), // Snug but professional internal margin
+                        .width(660.dp)
+                        .wrapContentHeight()
+                        .clip(RoundedCornerShape(32.dp)),
                     contentScale = ContentScale.Fit
                 )
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // App Name
-            Text(
-                text = "DrugsSearch",
-                style = MaterialTheme.typography.displaySmall.copy(
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.5.sp
-                ),
-                color = Color.White
-            )
-
-            // Tagline
-            Text(
-                text = "Smart Drug Guidance from Medical Reports",
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color.Gray,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .padding(top = 8.dp)
-                    .padding(horizontal = 48.dp)
-            )
-
-            Spacer(modifier = Modifier.height(56.dp))
+            Spacer(modifier = Modifier.height(64.dp))
 
             // Animated Loading dots
             Row(
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 LoadingDot(alpha = dot1Alpha)
@@ -165,7 +163,7 @@ fun SplashScreen(
         Text(
             text = "For informational use only",
             style = MaterialTheme.typography.labelSmall,
-            color = Color.DarkGray,
+            color = Color(0xFF94A3B8),
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 40.dp)
@@ -180,7 +178,7 @@ fun LoadingDot(alpha: Float) {
             .size(7.dp)
             .alpha(alpha)
             .background(
-                color = Color(0xFFFFB800),
+                color = Color(0xFF2196F3), // PrimaryBlue
                 shape = RoundedCornerShape(50)
             )
     )

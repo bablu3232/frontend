@@ -60,7 +60,7 @@ fun SearchDrugInformationScreen(
     
     val popularDrugs = listOf(
         "Metformin",
-        "Lisinopril",
+        "Dolo 650",
         "Atorvastatin",
         "Amlodipine",
         "Aspirin",

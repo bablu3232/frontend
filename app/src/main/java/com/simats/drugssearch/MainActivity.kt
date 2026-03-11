@@ -172,6 +172,7 @@ fun AppNavigation() {
     var userPhone by remember { mutableStateOf(sessionManager.getPhone()) }
     var userDob by remember { mutableStateOf(sessionManager.getDob()) }
     var userGender by remember { mutableStateOf(sessionManager.getGender()) }
+    var loggedInProfileImage by remember { mutableStateOf(sessionManager.getProfileImage()) }
     
     // Upload & Report State
     var selectedCategory by remember { mutableStateOf("") }
@@ -233,6 +234,20 @@ fun AppNavigation() {
                 dashboardTotalReports = 0
                 dashboardNormalReports = 0
                 dashboardAbnormalReports = 0
+            }
+        }
+    }
+
+    // Active User Tracking (Ping every 5 minutes while app is foregrounded and user is online)
+    LaunchedEffect(loggedInUserId) {
+        val uid = loggedInUserId
+        if (uid != null && !sessionManager.isAdminLoggedIn()) {
+            while (true) {
+                try {
+                    val req = com.simats.drugssearch.network.PingRequest(userId = uid)
+                    com.simats.drugssearch.network.RetrofitClient.instance.ping(req)
+                } catch (_: Exception) {}
+                kotlinx.coroutines.delay(5 * 60 * 1000L) // 5 minutes
             }
         }
     }
@@ -317,14 +332,17 @@ fun AppNavigation() {
         )
         
         Screen.Login -> LoginScreen(
-            onLoginSuccess = { userId, fullName, email, phone, dob, gender -> 
+            onLoginSuccess = { userId, fullName, email, phone, dob, gender, profileImage -> 
                 loggedInUserId = userId
                 loggedInUserName = fullName
                 userEmail = email
                 userPhone = phone
                 userDob = dob
                 userGender = gender
-                sessionManager.saveSession(userId, fullName, email, phone, dob, gender)
+                if (profileImage != null) {
+                    loggedInProfileImage = profileImage
+                }
+                sessionManager.saveSession(userId, fullName, email, phone, dob, gender, profileImage)
                 navigateTo(Screen.Dashboard) 
             },
             onRegisterClick = { navigateTo(Screen.Register) },
@@ -356,12 +374,15 @@ fun AppNavigation() {
             normalReports = dashboardNormalReports,
             abnormalReports = dashboardAbnormalReports,
             recentReports = recentReports,
+            profileImage = loggedInProfileImage,
             onUploadClick = { navigateTo(Screen.Upload) },
             onSearchClick = { navigateTo(Screen.SearchDrugInformation) },
             onHistoryClick = { navigateTo(Screen.ReportHistory) },
             onProfileClick = { navigateTo(Screen.Profile) },
             onHomeClick = { /* Already on dashboard */ },
-            onViewAllClick = { navigateTo(Screen.ReportHistory) }
+            onViewAllClick = { navigateTo(Screen.ReportHistory) },
+            onPrivacyPolicyClick = { showPrivacyPolicy = true },
+            onTermsOfServiceClick = { showTermsOfService = true }
         )
         
         Screen.Upload -> UploadScreen(
@@ -882,13 +903,14 @@ fun AppNavigation() {
         }
         
         Screen.Profile -> {
-            key(loggedInUserName, userEmail, userPhone, userDob, userGender) {
+            key(loggedInUserName, userEmail, userPhone, userDob, userGender, loggedInProfileImage) {
                 ProfileScreen(
                      userName = loggedInUserName,
                      userEmail = userEmail,
                      totalReports = dashboardTotalReports,
                      normalReports = dashboardNormalReports,
                      abnormalReports = dashboardAbnormalReports,
+                     profileImage = loggedInProfileImage,
                      onBackClick = { navigateTo(Screen.Dashboard) },
                      onPersonalInfoClick = { navigateTo(Screen.PersonalInformation) },
                      onPrivacySecurityClick = { navigateTo(Screen.PrivacySecurity) },
@@ -908,14 +930,18 @@ fun AppNavigation() {
                      onNavigationHomeClick = { navigateTo(Screen.Dashboard) },
                      onSearchClick = { navigateTo(Screen.SearchDrugInformation) },
                      onHistoryClick = { navigateTo(Screen.ReportHistory) },
-                     onUploadClick = { navigateTo(Screen.Upload) }
+                     onUploadClick = { navigateTo(Screen.Upload) },
+                     onPrivacyPolicyClick = { showPrivacyPolicy = true },
+                     onTermsOfServiceClick = { showTermsOfService = true }
                 )
             }
         }
         
         Screen.AboutApp -> AboutAppScreen(
             onBackClick = { navigateTo(Screen.Profile) },
-            onHomeClick = { navigateTo(Screen.Dashboard) }
+            onHomeClick = { navigateTo(Screen.Dashboard) },
+            onPrivacyPolicyClick = { showPrivacyPolicy = true },
+            onTermsOfServiceClick = { showTermsOfService = true }
         )
 
         Screen.PersonalInformation -> PersonalInformationScreen(
@@ -925,15 +951,19 @@ fun AppNavigation() {
             initialPhone = userPhone,
             initialDob = userDob,
             initialGender = userGender,
+            initialProfileImage = loggedInProfileImage,
             onBackClick = { navigateTo(Screen.Profile) },
             onHomeClick = { navigateTo(Screen.Dashboard) },
-            onSaveClick = { name, email, phone, dob, gender ->
+            onSaveClick = { name, email, phone, dob, gender, newProfileImage ->
                 loggedInUserName = name
                 userEmail = email
                 userPhone = phone
                 userDob = dob
                 userGender = gender
-                sessionManager.saveSession(loggedInUserId ?: 0, name, email, phone, dob, gender)
+                if (newProfileImage != null) {
+                    loggedInProfileImage = newProfileImage
+                }
+                sessionManager.saveSession(loggedInUserId ?: 0, name, email, phone, dob, gender, newProfileImage ?: loggedInProfileImage)
                 navigateTo(Screen.Profile)
             },
             onCancelClick = { navigateTo(Screen.Profile) }

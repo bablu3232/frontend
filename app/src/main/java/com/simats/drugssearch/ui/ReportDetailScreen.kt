@@ -433,7 +433,7 @@ private fun generateReportPdf(context: android.content.Context, report: HealthRe
     yPos += 25f
 
     val name = report.patientName ?: "N/A"
-    val age = report.patientAge?.toString() ?: "N/A"
+    val age = report.patientAge ?: "N/A"
     val gender = report.patientGender ?: "N/A"
 
     canvas.drawText("Name: $name", leftMargin, yPos, bodyPaint)
@@ -470,7 +470,21 @@ private fun generateReportPdf(context: android.content.Context, report: HealthRe
         val statusLabel = if (param.isNormal) "Normal" else "Abnormal"
         val paint = if (param.isNormal) normalPaint else abnormalPaint
         canvas.drawText(statusLabel, leftMargin + 430, yPos, paint)
-        yPos += 24f
+        yPos += 20f
+        
+        // Draw Recommendation if present
+        if (!param.recommendation.isNullOrEmpty()) {
+            if (yPos > pageHeight - 80) break
+            val recommendationPaint = Paint().apply {
+                textSize = 11f
+                color = android.graphics.Color.parseColor("#2196F3")
+                typeface = Typeface.create(Typeface.DEFAULT, Typeface.ITALIC)
+            }
+            canvas.drawText("Recommended: ${param.recommendation}", leftMargin, yPos, recommendationPaint)
+            yPos += 20f
+        } else {
+            yPos += 4f // Add a small padding gap between lines
+        }
     }
 
     // Footer
@@ -509,7 +523,7 @@ fun ReportDetailScreenPreview() {
         uploadedAt = "10:30 AM",
         isNormal = true,
         patientName = "John Doe",
-        patientAge = 35,
+        patientAge = "35",
         patientGender = "Male",
         parameters = listOf(
             ReportParameter("Hemoglobin", "14.2", "g/dL", true),

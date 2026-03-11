@@ -41,6 +41,9 @@ interface ApiService {
     @GET("test_connection.php")
     suspend fun testConnection(): Response<Void>
 
+    @POST("ping.php")
+    suspend fun ping(@Body request: PingRequest): Response<CommonResponse>
+
     @POST("request_otp.php")
     suspend fun requestOtp(@Body request: RequestOtpRequest): Response<CommonResponse>
 
@@ -55,6 +58,16 @@ interface ApiService {
 
     @POST("update_profile.php")
     suspend fun updateProfile(@Body request: UpdateProfileRequest): Response<CommonResponse>
+
+    @Multipart
+    @POST("upload_profile_image.php")
+    suspend fun uploadProfileImage(
+        @Part("user_id") userId: okhttp3.RequestBody,
+        @Part file: MultipartBody.Part
+    ): Response<UploadProfileImageResponse>
+
+    @GET("get_user_profile.php")
+    suspend fun getUserProfile(@Query("user_id") userId: Int): Response<UserProfileResponse>
 
     @POST("save_report_data.php")
     suspend fun saveReportData(@Body request: SaveReportRequest): Response<SaveReportResponse>

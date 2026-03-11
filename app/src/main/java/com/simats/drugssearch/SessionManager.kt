@@ -15,6 +15,7 @@ class SessionManager(context: Context) {
         private const val KEY_PHONE = "phone"
         private const val KEY_DOB = "dob"
         private const val KEY_GENDER = "gender"
+        private const val KEY_PROFILE_IMAGE = "profile_image"
         private const val KEY_IS_LOGGED_IN = "is_logged_in"
         private const val KEY_BIOMETRIC_ENABLED = "biometric_enabled"
         private const val KEY_TWO_FACTOR_ENABLED = "two_factor_enabled"
@@ -27,7 +28,8 @@ class SessionManager(context: Context) {
         email: String,
         phone: String,
         dob: String,
-        gender: String
+        gender: String,
+        profileImage: String? = null
     ) {
         prefs.edit().apply {
             putBoolean(KEY_IS_LOGGED_IN, true)
@@ -37,6 +39,9 @@ class SessionManager(context: Context) {
             putString(KEY_PHONE, phone)
             putString(KEY_DOB, dob)
             putString(KEY_GENDER, gender)
+            if (profileImage != null) {
+                putString(KEY_PROFILE_IMAGE, profileImage)
+            }
             apply()
         }
     }
@@ -49,6 +54,11 @@ class SessionManager(context: Context) {
     fun getPhone(): String = prefs.getString(KEY_PHONE, "") ?: ""
     fun getDob(): String = prefs.getString(KEY_DOB, "") ?: ""
     fun getGender(): String = prefs.getString(KEY_GENDER, "") ?: ""
+    fun getProfileImage(): String = prefs.getString(KEY_PROFILE_IMAGE, "") ?: ""
+    
+    fun setProfileImage(imageUrl: String) {
+        prefs.edit().putString(KEY_PROFILE_IMAGE, imageUrl).apply()
+    }
 
     fun isBiometricEnabled(): Boolean = prefs.getBoolean(KEY_BIOMETRIC_ENABLED, false)
     fun setBiometricEnabled(enabled: Boolean) {

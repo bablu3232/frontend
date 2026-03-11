@@ -15,7 +15,8 @@ data class LoginResponse(
     @SerializedName("email") val email: String?,
     @SerializedName("phone") val phone: String?,
     @SerializedName("date_of_birth") val dob: String?,
-    @SerializedName("gender") val gender: String?
+    @SerializedName("gender") val gender: String?,
+    @SerializedName("profile_image") val profileImage: String?
 )
 
 // Register
@@ -74,6 +75,23 @@ data class UpdateProfileRequest(
     @SerializedName("gender") val gender: String
 )
 
+data class UploadProfileImageResponse(
+    @SerializedName("status") val status: String,
+    @SerializedName("message") val message: String,
+    @SerializedName("profile_image_url") val profileImageUrl: String?
+)
+
+data class UserProfileResponse(
+    @SerializedName("message") val message: String,
+    @SerializedName("user_id") val userId: Int?,
+    @SerializedName("full_name") val fullName: String?,
+    @SerializedName("email") val email: String?,
+    @SerializedName("phone") val phone: String?,
+    @SerializedName("date_of_birth") val dob: String?,
+    @SerializedName("gender") val gender: String?,
+    @SerializedName("profile_image") val profileImage: String?
+)
+
 data class CommonResponse(
     @SerializedName("success") val success: Boolean,
     @SerializedName("message") val message: String
@@ -115,7 +133,7 @@ data class UserReport(
     @SerializedName("abnormal_count") val abnormalCount: Int,
     @SerializedName("parameters") val parameters: List<ReportParameter>,
     @SerializedName("patient_name") val patientName: String?,
-    @SerializedName("patient_age") val patientAge: Int?,
+    @SerializedName("patient_age") val patientAge: String?,
     @SerializedName("patient_gender") val patientGender: String?,
     @SerializedName("remarks") val remarks: String?
 )
@@ -172,7 +190,26 @@ data class AdminStats(
     @SerializedName("total_users") val totalUsers: Int,
     @SerializedName("total_reports") val totalReports: Int,
     @SerializedName("total_drugs") val totalDrugs: Int,
-    @SerializedName("total_parameters") val totalParameters: Int
+    @SerializedName("total_parameters") val totalParameters: Int,
+    @SerializedName("active_users") val activeUsers: Int?,
+    @SerializedName("active_users_list") val activeUsersList: List<ActiveUser>?,
+    @SerializedName("chart_data") val chartData: ChartData?
+)
+
+data class ChartData(
+    @SerializedName("labels") val labels: List<String>,
+    @SerializedName("users") val users: List<Int>,
+    @SerializedName("reports") val reports: List<Int>
+)
+
+data class ActiveUser(
+    @SerializedName("id") val id: Int,
+    @SerializedName("name") val name: String,
+    @SerializedName("email") val email: String
+)
+
+data class PingRequest(
+    @SerializedName("user_id") val userId: Int
 )
 
 data class AdminUsersResponse(

@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Assessment
 import androidx.compose.material.icons.filled.Medication
 import androidx.compose.material.icons.filled.Science
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
@@ -21,6 +22,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -164,17 +166,80 @@ fun AdminDashboardScreen(
 // ─── Overview Tab ───
 @Composable
 fun AdminOverviewTab(stats: AdminStats?) {
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+    val scrollState = rememberScrollState()
+    Column(modifier = Modifier.fillMaxSize().padding(16.dp).verticalScroll(scrollState)) {
         Text("Platform Statistics", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = TextDarkColor)
         Spacer(modifier = Modifier.height(16.dp))
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            StatCard(modifier = Modifier.weight(1f), title = "Active Now", value = stats?.activeUsers?.toString() ?: "0", icon = Icons.Default.CheckCircle, color = Color(0xFF0EA5E9))
             StatCard(modifier = Modifier.weight(1f), title = "Total Users", value = stats?.totalUsers?.toString() ?: "0", icon = Icons.Default.People, color = BlueColor)
-            StatCard(modifier = Modifier.weight(1f), title = "Total Reports", value = stats?.totalReports?.toString() ?: "0", icon = Icons.Default.Assessment, color = GreenColor)
         }
         Spacer(modifier = Modifier.height(16.dp))
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            StatCard(modifier = Modifier.weight(1f), title = "Total Reports", value = stats?.totalReports?.toString() ?: "0", icon = Icons.Default.Assessment, color = GreenColor)
             StatCard(modifier = Modifier.weight(1f), title = "Total Drugs", value = stats?.totalDrugs?.toString() ?: "0", icon = Icons.Default.Medication, color = Color(0xFFF59E0B))
-            StatCard(modifier = Modifier.weight(1f), title = "Lab Parameters", value = stats?.totalParameters?.toString() ?: "0", icon = Icons.Default.Science, color = Color(0xFF8B5CF6))
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            StatCard(modifier = Modifier.weight(0.5f), title = "Lab Parameters", value = stats?.totalParameters?.toString() ?: "0", icon = Icons.Default.Science, color = Color(0xFF8B5CF6))
+            Spacer(modifier = Modifier.weight(0.5f)) // Empty pad to keep grid aligned 2 per row
+        }
+        
+        Spacer(modifier = Modifier.height(24.dp))
+        Text("System Statistics Trend", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = TextDarkColor)
+        Spacer(modifier = Modifier.height(12.dp))
+        Card(
+            modifier = Modifier.fillMaxWidth().height(260.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        ) {
+            if (stats?.chartData != null && stats.chartData.labels.isNotEmpty()) {
+                Box(modifier = Modifier.fillMaxSize().padding(24.dp)) {
+                    MultiLineChart(modifier = Modifier.fillMaxSize(), chartData = stats.chartData)
+                }
+            } else {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("Loading interactive chart data...", color = TextGrayColor)
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+        Text("Currently Active Users", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = TextDarkColor)
+        Spacer(modifier = Modifier.height(12.dp))
+        
+        if (stats?.activeUsersList != null && stats.activeUsersList.isNotEmpty()) {
+            stats.activeUsersList.forEach { user ->
+                Card(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier.size(10.dp).background(GreenColor, androidx.compose.foundation.shape.CircleShape)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(user.name, fontWeight = FontWeight.Bold, color = TextDarkColor, fontSize = 15.sp)
+                            Text(user.email, color = TextGrayColor, fontSize = 13.sp)
+                        }
+                    }
+                }
+            }
+        } else {
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            ) {
+                Box(modifier = Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
+                    Text("No users are currently active.", color = TextGrayColor, fontSize = 14.sp)
+                }
+            }
         }
     }
 }
@@ -192,6 +257,147 @@ fun StatCard(modifier: Modifier = Modifier, title: String, value: String, icon: 
             Text(text = value, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = TextDarkColor)
             Text(text = title, style = MaterialTheme.typography.bodySmall, color = TextGrayColor)
         }
+    }
+}
+
+@Composable
+fun MultiLineChart(modifier: Modifier = Modifier, chartData: com.simats.drugssearch.network.ChartData) {
+    if (chartData.labels.isEmpty()) return
+    
+    val usersData = chartData.users.map { it.toFloat() }
+    val reportsData = chartData.reports.map { it.toFloat() }
+    
+    val maxUsers = usersData.maxOrNull() ?: 10f
+    val maxReports = reportsData.maxOrNull() ?: 10f
+    val rawMaxVal = maxOf(maxUsers, maxReports).coerceAtLeast(10f)
+    
+    // Calculate nice dynamic Y-axis intervals (4 segments)
+    val rawStep = rawMaxVal / 4f
+    val magnitude = Math.pow(10.0, kotlin.math.floor(kotlin.math.log10(rawStep.toDouble()))).toFloat()
+    val rawStepNormalized = rawStep / magnitude
+    val niceStepNormalized = when {
+        rawStepNormalized <= 1.0f -> 1.0f
+        rawStepNormalized <= 2.0f -> 2.0f
+        rawStepNormalized <= 2.5f -> 2.5f
+        rawStepNormalized <= 5.0f -> 5.0f
+        else -> 10.0f
+    }
+    val niceStep = niceStepNormalized * magnitude
+    val cleanMaxVal = (niceStep * 4).coerceAtLeast(10f)
+    
+    val minVal = 0f
+    val range = cleanMaxVal - minVal
+    
+    val usersColor = Color(0xFF0EA5E9)   // Blue
+    val reportsColor = Color(0xFF10B981) // Green
+
+    val paint = androidx.compose.ui.graphics.Paint().asFrameworkPaint().apply {
+        isAntiAlias = true
+        textSize = 30f
+        color = android.graphics.Color.parseColor("#94A3B8")
+        textAlign = android.graphics.Paint.Align.CENTER
+    }
+
+    androidx.compose.foundation.Canvas(modifier = modifier) {
+        val width = size.width
+        val height = size.height
+        val paddingX = 80f // left margin for Y labels
+        val paddingY = 60f // bottom margin for X labels
+        val topPadding = 20f
+        
+        val usableWidth = width - paddingX
+        val usableHeight = height - paddingY - topPadding
+        val stepX = usableWidth / (chartData.labels.size - 1).coerceAtLeast(1)
+        
+        // Draw grid lines & Y-axis labels
+        val gridLines = 4
+        val gridColor = Color(0xFFE2E8F0)
+        for (i in 0..gridLines) {
+            val y = topPadding + usableHeight - (i * (usableHeight / gridLines))
+            val valueLabel = (minVal + (i * range / gridLines)).toInt().toString()
+            
+            drawLine(
+                color = gridColor,
+                start = androidx.compose.ui.geometry.Offset(paddingX, y),
+                end = androidx.compose.ui.geometry.Offset(width, y),
+                strokeWidth = 2f
+            )
+            drawContext.canvas.nativeCanvas.drawText(
+                valueLabel,
+                paddingX / 2,
+                y + 10f,
+                paint.apply { textAlign = android.graphics.Paint.Align.CENTER }
+            )
+        }
+        
+        // Draw Axes lines
+        val axisColor = Color(0xFF94A3B8)
+        drawLine(
+            color = axisColor,
+            start = androidx.compose.ui.geometry.Offset(paddingX, topPadding),
+            end = androidx.compose.ui.geometry.Offset(paddingX, topPadding + usableHeight),
+            strokeWidth = 3f
+        )
+        drawLine(
+            color = axisColor,
+            start = androidx.compose.ui.geometry.Offset(paddingX, topPadding + usableHeight),
+            end = androidx.compose.ui.geometry.Offset(width, topPadding + usableHeight),
+            strokeWidth = 3f
+        )
+        
+        // X-axis labels
+        chartData.labels.forEachIndexed { index, monthLabel ->
+            val x = paddingX + (index * stepX)
+            drawContext.canvas.nativeCanvas.drawText(
+                monthLabel,
+                x,
+                topPadding + usableHeight + 40f,
+                paint.apply { textAlign = android.graphics.Paint.Align.CENTER }
+            )
+        }
+
+        fun drawDataLine(data: List<Float>, lineColor: Color) {
+            if (data.isEmpty()) return
+            val points = data.mapIndexed { index, value ->
+                val x = paddingX + (index * stepX)
+                val y = topPadding + usableHeight - ((value - minVal) / range) * usableHeight
+                androidx.compose.ui.geometry.Offset(x, y)
+            }
+
+            val path = androidx.compose.ui.graphics.Path().apply {
+                moveTo(points.first().x, points.first().y)
+                for (i in 1 until points.size) {
+                    lineTo(points[i].x, points[i].y)
+                }
+            }
+            
+            drawPath(
+                path = path,
+                color = lineColor,
+                style = androidx.compose.ui.graphics.drawscope.Stroke(
+                    width = 6f, 
+                    cap = androidx.compose.ui.graphics.StrokeCap.Round,
+                    join = androidx.compose.ui.graphics.StrokeJoin.Round
+                )
+            )
+            
+            points.forEach { point ->
+                drawCircle(color = lineColor, radius = 10f, center = point)
+                drawCircle(color = Color.White, radius = 5f, center = point)
+            }
+        }
+
+        drawDataLine(usersData, usersColor)
+        drawDataLine(reportsData, reportsColor)
+        
+        // Legend
+        val legendY = 0f
+        drawCircle(color = usersColor, radius = 8f, center = androidx.compose.ui.geometry.Offset(paddingX + 20f, legendY))
+        drawContext.canvas.nativeCanvas.drawText("Users", paddingX + 70f, legendY + 10f, paint.apply { textAlign = android.graphics.Paint.Align.CENTER })
+        
+        val reportsLegendX = paddingX + 160f
+        drawCircle(color = reportsColor, radius = 8f, center = androidx.compose.ui.geometry.Offset(reportsLegendX, legendY))
+        drawContext.canvas.nativeCanvas.drawText("Reports", reportsLegendX + 60f, legendY + 10f, paint.apply { textAlign = android.graphics.Paint.Align.CENTER })
     }
 }
 

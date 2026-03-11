@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.CircleShape
 import com.simats.drugssearch.R
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
+import coil.compose.AsyncImage
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -58,6 +59,7 @@ fun ProfileScreen(
     totalReports: Int = 12,
     normalReports: Int = 8,
     abnormalReports: Int = 4,
+    profileImage: String = "",
     onBackClick: () -> Unit = {},
     onHomeClick: () -> Unit = {},
     onPersonalInfoClick: () -> Unit = {},
@@ -69,7 +71,9 @@ fun ProfileScreen(
     onNavigationHomeClick: () -> Unit = {},
     onUploadClick: () -> Unit = {},
     onSearchClick: () -> Unit = {},
-    onHistoryClick: () -> Unit = {}
+    onHistoryClick: () -> Unit = {},
+    onPrivacyPolicyClick: () -> Unit = {},
+    onTermsOfServiceClick: () -> Unit = {}
 ) {
     var showLogoutDialog by remember { mutableStateOf(false) }
 
@@ -111,7 +115,8 @@ fun ProfileScreen(
                     userEmail = userEmail,
                     totalReports = totalReports,
                     normalReports = normalReports,
-                    abnormalReports = abnormalReports
+                    abnormalReports = abnormalReports,
+                    profileImage = profileImage
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -215,7 +220,7 @@ fun ProfileScreen(
                             fontSize = 12.sp
                         ),
                         color = PrimaryBlue,
-                        modifier = Modifier.clickable { }
+                        modifier = Modifier.clickable { onPrivacyPolicyClick() }
                     )
                     Text(
                         text = "  •  ",
@@ -228,7 +233,7 @@ fun ProfileScreen(
                             fontSize = 12.sp
                         ),
                         color = PrimaryBlue,
-                        modifier = Modifier.clickable { }
+                        modifier = Modifier.clickable { onTermsOfServiceClick() }
                     )
                 }
 
@@ -319,7 +324,8 @@ private fun ProfileHeaderSection(
     userEmail: String,
     totalReports: Int,
     normalReports: Int,
-    abnormalReports: Int
+    abnormalReports: Int,
+    profileImage: String = ""
 ) {
     Column(
         modifier = Modifier
@@ -335,15 +341,25 @@ private fun ProfileHeaderSection(
         Box(
             modifier = Modifier
                 .size(100.dp)
-                .background(PrimaryBlue, CircleShape),
+                .background(if (profileImage.isEmpty()) PrimaryBlue else Color.LightGray, CircleShape),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                imageVector = Icons.Outlined.Person,
-                contentDescription = "Profile",
-                tint = Color.White,
-                modifier = Modifier.size(50.dp)
-            )
+            if (profileImage.isNotEmpty()) {
+                val fullUrl = if (profileImage.startsWith("http")) profileImage else "http://10.88.244.212/drugssearch/$profileImage"
+                AsyncImage(
+                    model = fullUrl,
+                    contentDescription = "Profile Picture",
+                    modifier = Modifier.fillMaxSize().clip(CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Icon(
+                    imageVector = Icons.Outlined.Person,
+                    contentDescription = "Profile",
+                    tint = Color.White,
+                    modifier = Modifier.size(50.dp)
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))

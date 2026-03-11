@@ -66,4 +66,7 @@ dependencies {
     implementation("androidx.biometric:biometric:1.1.0")
 // Fix FilePicker crash resulting from biometric fragment usage
     implementation("androidx.fragment:fragment-ktx:1.8.5")
+    
+    // Coil (for Image loading from URLs)
+    implementation("io.coil-kt:coil-compose:2.4.0")
 }

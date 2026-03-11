@@ -40,7 +40,9 @@ private val TextGrayColor = Color(0xFF64748B)
 @Composable
 fun AboutAppScreen(
     onBackClick: () -> Unit = {},
-    onHomeClick: () -> Unit = {}
+    onHomeClick: () -> Unit = {},
+    onPrivacyPolicyClick: () -> Unit = {},
+    onTermsOfServiceClick: () -> Unit = {}
 ) {
     Scaffold(
         containerColor = BackgroundColor
@@ -130,41 +132,54 @@ fun AboutAppScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Features Grid
+                // Features Row
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     FeatureCard(
                         modifier = Modifier.weight(1f),
                         icon = Icons.Default.Favorite,
-                        title = "Patient-Focused",
+                        title = "Patient\nFocused",
                         color = Color(0xFFFFEBEE), // Light Pink
                         iconTint = Color(0xFFEF5350)
                     )
                     FeatureCard(
                         modifier = Modifier.weight(1f),
                         icon = Icons.Default.VerifiedUser,
-                        title = "Secure",
+                        title = "Secure\nData",
                         color = Color(0xFFE8F5E9), // Light Green
                         iconTint = Color(0xFF66BB6A)
                     )
-                }
-                
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
                     FeatureCard(
                         modifier = Modifier.weight(1f),
                         icon = Icons.Default.Face,
-                        title = "User-Friendly",
+                        title = "User\nFriendly",
                         color = Color(0xFFE3F2FD), // Light Blue
                         iconTint = Color(0xFF42A5F5)
                     )
-                     Spacer(modifier = Modifier.weight(1f))
+                }
+
+                Spacer(modifier = Modifier.height(32.dp))
+                
+                // Legal Buttons
+                Button(
+                    onClick = onPrivacyPolicyClick,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("Privacy Policy", modifier = Modifier.padding(vertical = 8.dp), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedButton(
+                    onClick = onTermsOfServiceClick,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("Terms of Service", modifier = Modifier.padding(vertical = 8.dp), color = PrimaryBlue, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
 
                 Spacer(modifier = Modifier.height(32.dp))
@@ -210,8 +225,9 @@ fun FeatureCard(
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = title,
-                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                color = TextDarkColor
+                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold, lineHeight = 14.sp),
+                color = TextDarkColor,
+                textAlign = TextAlign.Center
             )
         }
     }
@@ -239,6 +255,12 @@ private fun AboutAppTopBar(
                 tint = TextDarkColor
             )
         }
+        
+        Text(
+            text = "About Us",
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, fontSize = 18.sp),
+            color = TextDarkColor
+        )
 
         IconButton(onClick = onHomeClick) {
             Icon(

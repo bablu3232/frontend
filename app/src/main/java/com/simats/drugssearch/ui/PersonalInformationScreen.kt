@@ -3,6 +3,7 @@ package com.simats.drugssearch.ui
 import android.app.DatePickerDialog
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -23,6 +24,17 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import coil.compose.AsyncImage
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -48,9 +60,10 @@ fun PersonalInformationScreen(
     initialPhone: String = "",
     initialDob: String = "",
     initialGender: String = "",
+    initialProfileImage: String = "",
     onBackClick: () -> Unit = {},
     onHomeClick: () -> Unit = {},
-    onSaveClick: (String, String, String, String, String) -> Unit = { _, _, _, _, _ -> },
+    onSaveClick: (String, String, String, String, String, String?) -> Unit = { _, _, _, _, _, _ -> },
     onCancelClick: () -> Unit = {}
 ) {
     var name by remember(initialName) { mutableStateOf(initialName) }
@@ -58,11 +71,50 @@ fun PersonalInformationScreen(
     var phone by remember(initialPhone) { mutableStateOf(initialPhone) }
     var dob by remember(initialDob) { mutableStateOf(initialDob) }
     var gender by remember(initialGender) { mutableStateOf(initialGender) }
+    var profileImage by remember(initialProfileImage) { mutableStateOf(initialProfileImage) }
     
     var isLoading by remember { mutableStateOf(false) }
+    var isUploadingImage by remember { mutableStateOf(false) }
     var apiMessage by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri != null) {
+            isUploadingImage = true
+            apiMessage = null
+            scope.launch {
+                try {
+                    val inputStream = context.contentResolver.openInputStream(uri)
+                    val bytes = withContext(Dispatchers.IO) { inputStream?.readBytes() }
+                    
+                    if (bytes != null) {
+                        val requestBody = bytes.toRequestBody("image/*".toMediaTypeOrNull())
+                        val part = MultipartBody.Part.createFormData(
+                            "file", 
+                            "profile_${userId}_${System.currentTimeMillis()}.jpg", 
+                            requestBody
+                        )
+                        val userIdBody = userId.toString().toRequestBody("text/plain".toMediaTypeOrNull())
+                        
+                        val response = RetrofitClient.instance.uploadProfileImage(userIdBody, part)
+                        if (response.isSuccessful && response.body()?.status == "success") {
+                            profileImage = response.body()?.profileImageUrl ?: ""
+                            android.widget.Toast.makeText(context, "Image uploaded temporarily. Don't forget to push Save Changes!", android.widget.Toast.LENGTH_LONG).show()
+                        } else {
+                            apiMessage = response.body()?.message ?: "Failed to upload image"
+                        }
+                    }
+                } catch (e: Exception) {
+                    apiMessage = "Image upload failed: ${e.message}"
+                } finally {
+                    isUploadingImage = false
+                }
+            }
+        }
+    }
 
     Scaffold(
         containerColor = BackgroundColor
@@ -114,6 +166,61 @@ fun PersonalInformationScreen(
                         modifier = Modifier.padding(20.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
+                        
+                        // Profile Avatar Edit Section
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.CenterHorizontally)
+                                .padding(bottom = 16.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(100.dp)
+                                    .clip(CircleShape)
+                                    .background(if (profileImage.isEmpty()) PrimaryBlue else Color.LightGray)
+                                    .clickable(enabled = !isUploadingImage) { imagePickerLauncher.launch("image/*") },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (isUploadingImage) {
+                                    CircularProgressIndicator(color = Color.White)
+                                } else if (profileImage.isNotEmpty()) {
+                                    val fullUrl = if (profileImage.startsWith("http")) profileImage else "http://10.88.244.212/drugssearch/$profileImage"
+                                    AsyncImage(
+                                        model = fullUrl,
+                                        contentDescription = "Profile Picture",
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                } else {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Person,
+                                        contentDescription = "Profile",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(50.dp)
+                                    )
+                                }
+                            }
+                            
+                            // Edit Icon Overlay
+                            Box(
+                                modifier = Modifier
+                                    .align(Alignment.BottomEnd)
+                                    .size(32.dp)
+                                    .clip(CircleShape)
+                                    .background(Color.White, CircleShape)
+                                    .border(1.dp, CardBorderColor, CircleShape)
+                                    .clickable(enabled = !isUploadingImage) { imagePickerLauncher.launch("image/*") },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Edit,
+                                    contentDescription = "Edit Image",
+                                    modifier = Modifier.size(16.dp),
+                                    tint = PrimaryBlue
+                                )
+                            }
+                        }
+
                         // Full Name
                         ProfileInputField(
                             label = "Full Name",
@@ -301,7 +408,7 @@ fun PersonalInformationScreen(
                                             
                                             if (response.isSuccessful) {
                                                 android.widget.Toast.makeText(context, "Profile Updated Successfully", android.widget.Toast.LENGTH_SHORT).show()
-                                                onSaveClick(name, email, phone, dob, gender)
+                                                onSaveClick(name, email, phone, dob, gender, profileImage)
                                             } else {
                                                 apiMessage = response.body()?.message ?: "Failed to update profile"
                                                 if (apiMessage == null && response.errorBody() != null) {

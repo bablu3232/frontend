@@ -5,7 +5,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.CircleShape
 import com.simats.drugssearch.R
+import coil.compose.AsyncImage
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -64,12 +66,15 @@ fun DashboardScreen(
     normalReports: Int = 0,
     abnormalReports: Int = 0,
     recentReports: List<UserReport> = emptyList(),
+    profileImage: String = "",
     onUploadClick: () -> Unit = {},
     onSearchClick: () -> Unit = {},
     onHistoryClick: () -> Unit = {},
     onProfileClick: () -> Unit = {},
     onHomeClick: () -> Unit = {},
-    onViewAllClick: () -> Unit = {}
+    onViewAllClick: () -> Unit = {},
+    onPrivacyPolicyClick: () -> Unit = {},
+    onTermsOfServiceClick: () -> Unit = {}
 ) {
     Scaffold(
         bottomBar = {
@@ -91,7 +96,10 @@ fun DashboardScreen(
 
         ) {
             // Top App Bar
-            DashboardTopBar()
+            DashboardTopBar(
+                profileImage = profileImage,
+                onProfileClick = onProfileClick
+            )
 
             LazyColumn(
                 modifier = Modifier
@@ -333,7 +341,10 @@ fun DashboardScreen(
                     Spacer(modifier = Modifier.height(24.dp))
                     
                     // Footer Links
-                    FooterLinks()
+                    FooterLinks(
+                        onPrivacyPolicyClick = onPrivacyPolicyClick,
+                        onTermsOfServiceClick = onTermsOfServiceClick
+                    )
                     
                     Spacer(modifier = Modifier.height(12.dp))
                     
@@ -352,7 +363,10 @@ fun DashboardScreen(
 }
 
 @Composable
-fun DashboardTopBar() {
+fun DashboardTopBar(
+    profileImage: String = "",
+    onProfileClick: () -> Unit = {}
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -390,12 +404,30 @@ fun DashboardTopBar() {
             )
         }
         
-        IconButton(onClick = { /* TODO */ }) {
-            Icon(
-                imageVector = Icons.Default.Home,
-                contentDescription = "Home",
-                tint = TextGrayColor
-            )
+        // Profile DP
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(Color.LightGray)
+                .clickable { onProfileClick() },
+            contentAlignment = Alignment.Center
+        ) {
+            if (profileImage.isNotEmpty()) {
+                val fullUrl = if (profileImage.startsWith("http")) profileImage else "http://10.88.244.212/drugssearch/$profileImage"
+                AsyncImage(
+                    model = fullUrl,
+                    contentDescription = "Profile Picture",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Icon(
+                    imageVector = Icons.Default.Person,
+                    contentDescription = "Profile",
+                    tint = Color.White
+                )
+            }
         }
     }
 }
@@ -615,7 +647,10 @@ fun DisclaimerSection() {
 }
 
 @Composable
-fun FooterLinks() {
+fun FooterLinks(
+    onPrivacyPolicyClick: () -> Unit = {},
+    onTermsOfServiceClick: () -> Unit = {}
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Center,
@@ -628,7 +663,7 @@ fun FooterLinks() {
                 fontWeight = FontWeight.Medium
             ),
             color = PrimaryBlue,
-            modifier = Modifier.clickable { }
+            modifier = Modifier.clickable { onPrivacyPolicyClick() }
         )
         Text(
             text = "  •  ",
@@ -642,7 +677,7 @@ fun FooterLinks() {
                 fontWeight = FontWeight.Medium
             ),
             color = PrimaryBlue,
-            modifier = Modifier.clickable { }
+            modifier = Modifier.clickable { onTermsOfServiceClick() }
         )
     }
 }
