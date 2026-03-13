@@ -143,7 +143,35 @@ fun LoginScreen(
                 .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Institutional Logos Row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // SIMATS Logo
+                Image(
+                    painter = painterResource(id = R.drawable.simatslogo1),
+                    contentDescription = "SIMATS Logo",
+                    modifier = Modifier.size(70.dp),
+                    contentScale = ContentScale.Fit
+                )
+
+                Spacer(modifier = Modifier.width(180.dp))
+
+                // SSE Logo
+                Image(
+                    painter = painterResource(id = R.drawable.sse_log0),
+                    contentDescription = "SSE Logo",
+                    modifier = Modifier
+                        .size(70.dp),
+                    contentScale = ContentScale.Fit
+                )
+            }
+
+            Spacer(modifier = Modifier.height(50.dp))
 
             // Welcome Back Title
             Text(
@@ -523,7 +551,7 @@ fun LoginScreen(
 
             // Copyright
             Text(
-                text = "© 2026 DrugsSearch. All rights reserved.",
+                text = "2026 © Powered by SIMATS Engineering",
                 style = MaterialTheme.typography.bodySmall.copy(
                     fontSize = 12.sp
                 ),

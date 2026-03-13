@@ -185,6 +185,13 @@ fun AboutAppScreen(
                 Spacer(modifier = Modifier.height(32.dp))
                 
                 Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    text = "2026 © Powered by SIMATS Engineering",
+                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                    color = TextGrayColor,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+                Spacer(modifier = Modifier.height(32.dp))
             }
         }
     }

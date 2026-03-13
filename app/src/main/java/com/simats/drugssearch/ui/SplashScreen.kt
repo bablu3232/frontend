@@ -159,15 +159,26 @@ fun SplashScreen(
             }
         }
 
-        // Footer Text
-        Text(
-            text = "For informational use only",
-            style = MaterialTheme.typography.labelSmall,
-            color = Color(0xFF94A3B8),
+        // Footer Texts
+        Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 40.dp)
-        )
+                .padding(bottom = 40.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = "For informational use only",
+                style = MaterialTheme.typography.labelSmall,
+                color = Color(0xFF94A3B8)
+            )
+
+            Text(
+                text = "2026 © Powered by SIMATS Engineering",
+                style = MaterialTheme.typography.labelSmall,
+                color = Color(0xFF94A3B8)
+            )
+        }
     }
 }
 

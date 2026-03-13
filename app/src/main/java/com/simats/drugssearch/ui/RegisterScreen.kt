@@ -39,8 +39,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import com.simats.drugssearch.network.RegisterRequest
+import com.simats.drugssearch.network.RegisterResponse
 import com.simats.drugssearch.network.RetrofitClient
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.text.ClickableText
+import com.google.gson.Gson
 
 // Register Screen Colors
 private val PrimaryBlue = Color(0xFF3B82F6)
@@ -177,7 +180,34 @@ fun RegisterScreen(
                 .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Institutional Logos Row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // SIMATS Logo
+                Image(
+                    painter = painterResource(id = R.drawable.simatslogo1),
+                    contentDescription = "SIMATS Logo",
+                    modifier = Modifier.size(70.dp),
+                    contentScale = ContentScale.Fit
+                )
+
+                Spacer(modifier = Modifier.width(180.dp))
+
+                // SSE Logo
+                Image(
+                    painter = painterResource(id = R.drawable.sse_log0),
+                    contentDescription = "SSE Logo",
+                    modifier = Modifier.size(70.dp),
+                    contentScale = ContentScale.Fit
+                )
+            }
+
+            Spacer(modifier = Modifier.height(50.dp))
 
             // Create Account Title
             Text(
@@ -512,25 +542,46 @@ fun RegisterScreen(
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            buildAnnotatedString {
+                        ClickableText(
+                            text = buildAnnotatedString {
                                 withStyle(style = SpanStyle(color = TextDarkColor)) {
                                     append("I agree to the ")
                                 }
+                                pushStringAnnotation(tag = "terms", annotation = "terms")
                                 withStyle(style = SpanStyle(color = PrimaryBlue, fontWeight = FontWeight.Medium)) {
                                     append("Terms of Service")
                                 }
+                                pop()
                                 withStyle(style = SpanStyle(color = TextDarkColor)) {
                                     append(" and ")
                                 }
+                                pushStringAnnotation(tag = "privacy", annotation = "privacy")
                                 withStyle(style = SpanStyle(color = PrimaryBlue, fontWeight = FontWeight.Medium)) {
                                     append("Privacy Policy")
                                 }
+                                pop()
                             },
                             style = MaterialTheme.typography.bodySmall.copy(
                                 fontSize = 13.sp,
                                 lineHeight = 18.sp
-                            )
+                            ),
+                            onClick = { offset ->
+                                val termsAnnotation = buildAnnotatedString {
+                                    pushStringAnnotation(tag = "terms", annotation = "terms")
+                                    append("Terms of Service")
+                                }.getStringAnnotations(tag = "terms", start = offset, end = offset).firstOrNull()
+
+                                val privacyAnnotation = buildAnnotatedString {
+                                    pushStringAnnotation(tag = "privacy", annotation = "privacy")
+                                    append("Privacy Policy")
+                                }.getStringAnnotations(tag = "privacy", start = offset, end = offset).firstOrNull()
+
+                                if (termsAnnotation != null) {
+                                    onTermsOfServiceClick()
+                                } else if (privacyAnnotation != null) {
+                                    onPrivacyPolicyClick()
+                                }
+                            }
                         )
                     }
 
@@ -649,8 +700,14 @@ fun RegisterScreen(
                                                 // Call the original callback for navigation
                                                 onCreateAccountClick(fullName, email, phoneNumber, password)
                                             } else {
-                                                apiError = "Registration failed: ${response.message()}"
-                                                // You could parse error body here if needed
+                                                val errorBody = response.errorBody()?.string()
+                                                val errorMessage = try {
+                                                    val errorResponse = Gson().fromJson(errorBody, RegisterResponse::class.java)
+                                                    errorResponse.message
+                                                } catch (e: Exception) {
+                                                    null
+                                                }
+                                                apiError = errorMessage ?: "Registration failed: ${response.message()}"
                                             }
                                         }
                                     } catch (e: Exception) {
@@ -804,7 +861,7 @@ fun RegisterScreen(
 
             // Copyright
             Text(
-                text = "© 2026 DrugsSearch. All rights reserved.",
+                text = "2026 © Powered by SIMATS Engineering",
                 style = MaterialTheme.typography.bodySmall.copy(
                     fontSize = 12.sp
                 ),

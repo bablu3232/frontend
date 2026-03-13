@@ -319,7 +319,7 @@ fun ForgotPasswordScreen(
 
             // Copyright
             Text(
-                text = "© 2026 DrugsSearch. All rights reserved.",
+                text = "2026 © Powered by SIMATS Engineering",
                 style = MaterialTheme.typography.bodySmall.copy(
                     fontSize = 12.sp
                 ),
