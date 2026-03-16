@@ -63,8 +63,8 @@ private fun isValidEmail(email: String): Boolean {
 }
 
 private fun isValidName(name: String): Boolean {
-    // Name must allow only letters and spaces and be rigidly > 4 characters (min 5)
-    val namePattern = "^[a-zA-Z\\s]{5,}$".toRegex()
+    // Name must allow only letters and spaces and be rigidly >= 3 characters
+    val namePattern = "^[a-zA-Z\\s]{3,}$".toRegex()
     return name.isNotEmpty() && namePattern.matches(name)
 }
 
@@ -638,7 +638,7 @@ fun RegisterScreen(
                                 fullNameError = "Please enter your full name"
                                 hasError = true
                             } else if (!isValidName(fullName.trim())) {
-                                fullNameError = "Name must be more than 4 characters (letters/spaces only)"
+                                fullNameError = "Name must be at least 3 characters (letters/spaces only)"
                                 hasError = true
                             }
                             
