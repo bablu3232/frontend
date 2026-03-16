@@ -69,8 +69,8 @@ private fun isValidName(name: String): Boolean {
 }
 
 private fun isValidPhone(phone: String): Boolean {
-    // Phone must be exactly 10 digits
-    val phonePattern = "^[0-9]{10}$".toRegex()
+    // Phone must be exactly 10 digits and start with 6, 7, 8, or 9 (Indian numbers)
+    val phonePattern = "^[6-9][0-9]{9}$".toRegex()
     return phone.isNotEmpty() && phonePattern.matches(phone)
 }
 
@@ -650,7 +650,7 @@ fun RegisterScreen(
                             
                             // Validate phone
                             if (!isValidPhone(phoneNumber)) {
-                                phoneError = "Please enter a valid 10-digit phone number"
+                                phoneError = "Please enter a valid 10-digit Indian mobile number"
                                 hasError = true
                             }
                             
