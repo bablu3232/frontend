@@ -88,13 +88,41 @@ private fun getUnit(name: String): String {
     return normalRangesWithUnits[name]?.second ?: ""
 }
 
-private fun getNormalRangeDisplay(name: String): String {
+private fun getNormalRangeDisplay(name: String, details: com.simats.drugssearch.network.DetectedParameter): String {
+    val minVal = details.minValue?.toString()?.removeSuffix(".0")
+    val maxVal = details.maxValue?.toString()?.removeSuffix(".0")
+    if (minVal != null && maxVal != null) {
+        val unit = details.unit ?: ""
+        return "$minVal - $maxVal $unit".trim()
+    }
     return normalRangesWithUnits[name]?.third ?: ""
 }
 
 // Calculate severity based on how far the value is from normal range
-private fun getSeverity(name: String, value: String): String {
+private fun getSeverity(name: String, value: String, details: com.simats.drugssearch.network.DetectedParameter): String {
+    if (!details.riskLevel.isNullOrEmpty() && details.riskLevel != "None") {
+        return details.riskLevel
+    }
+
     val numValue = value.toDoubleOrNull() ?: return "Mild"
+    
+    val minVal = (details.minValue as? Number)?.toDouble() ?: details.minValue?.toString()?.toDoubleOrNull()
+    val maxVal = (details.maxValue as? Number)?.toDouble() ?: details.maxValue?.toString()?.toDoubleOrNull()
+
+    if (minVal != null && maxVal != null) {
+        val deviation = if (numValue < minVal) {
+            if (minVal == 0.0) 0.0 else (minVal - numValue) / minVal
+        } else {
+            if (maxVal == 0.0) 0.0 else (numValue - maxVal) / maxVal
+        }
+        
+        return when {
+            deviation > 0.3 -> "High"
+            deviation > 0.15 -> "Moderate"
+            else -> "Mild"
+        }
+    }
+
     val rangeData = normalRangesWithUnits[name] ?: return "Mild"
     val range = rangeData.first
     
@@ -238,12 +266,12 @@ fun AbnormalResultsScreen(
                 abnormalValues.forEach { (name, details) ->
                     val displayValue = details.value?.toString() ?: ""
                     val displayUnit = details.unit ?: getUnit(name)
-                    val severity = getSeverity(name, displayValue)
+                    val severity = getSeverity(name, displayValue, details)
                     AbnormalParameterCard(
                         parameterName = name,
                         yourValue = displayValue,
                         unit = displayUnit,
-                        normalRange = getNormalRangeDisplay(name),
+                        normalRange = getNormalRangeDisplay(name, details),
                         severity = severity,
                         onClick = { onParameterClick(name) }
                     )

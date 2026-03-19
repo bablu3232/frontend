@@ -130,7 +130,7 @@ fun TermsOfServiceScreen(
                         color = Color.Black
                     )
                     Text(
-                        text = "We use third-party APIs (Gemini, OCRSpace) to extract text from your uploaded lab files. We cannot guarantee 100% accuracy. Users are solely responsible for manually verifying the extracted parameters against their original physical report before saving any analysis.",
+                        text = "We use third-party APIs (OCRSpace) to extract text from your uploaded lab files. We cannot guarantee 100% accuracy. Users are solely responsible for manually verifying the extracted parameters against their original physical report before saving any analysis.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.Black,
                         modifier = Modifier.padding(top = 8.dp, bottom = 16.dp)

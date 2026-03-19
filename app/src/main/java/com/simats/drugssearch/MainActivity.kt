@@ -13,6 +13,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.unit.dp
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Chat
 import com.simats.drugssearch.ui.*
 import com.simats.drugssearch.ui.theme.DrugsSearchTheme
 import com.simats.drugssearch.network.SaveReportRequest
@@ -82,7 +88,8 @@ enum class Screen {
     HelpSupport,
     FAQ,
     AdminLogin,
-    AdminDashboard
+    AdminDashboard,
+    Chat
 }
 
 @Composable
@@ -176,7 +183,7 @@ fun AppNavigation() {
     
     // Upload & Report State
     var selectedCategory by remember { mutableStateOf("") }
-    var reviewValuesMap by remember { mutableStateOf(mapOf<String, String>()) }
+    var reviewValuesMap by remember { mutableStateOf(mapOf<String, com.simats.drugssearch.network.DetectedParameter>()) }
     var currentAnalysis by remember { mutableStateOf<com.simats.drugssearch.network.OcrResponse?>(null) }
     
     // Category Specific State Values
@@ -255,47 +262,47 @@ fun AppNavigation() {
     // Derived values for review/analysis
     val valuesForReview = when (selectedCategory) {
         "Blood Count" -> mapOf(
-            "Hemoglobin" to bloodCountValues.hemoglobin,
-            "WBC" to bloodCountValues.wbcCount,
-            "RBC" to bloodCountValues.rbcCount,
-            "Platelets" to bloodCountValues.plateletCount,
-            "Hematocrit" to bloodCountValues.hematocrit
+            "Hemoglobin" to com.simats.drugssearch.network.DetectedParameter(value = bloodCountValues.hemoglobin, unit = "g/dL", minValue = 13.0, maxValue = 17.0, status = null, category = "Blood Count", condition = null, summary = null, recommendation = null),
+            "WBC" to com.simats.drugssearch.network.DetectedParameter(value = bloodCountValues.wbcCount, unit = "/µL", minValue = 4000.0, maxValue = 11000.0, status = null, category = "Blood Count", condition = null, summary = null, recommendation = null),
+            "RBC" to com.simats.drugssearch.network.DetectedParameter(value = bloodCountValues.rbcCount, unit = "million/µL", minValue = 4.5, maxValue = 5.5, status = null, category = "Blood Count", condition = null, summary = null, recommendation = null),
+            "Platelets" to com.simats.drugssearch.network.DetectedParameter(value = bloodCountValues.plateletCount, unit = "10^3/µL", minValue = 150.0, maxValue = 450.0, status = null, category = "Blood Count", condition = null, summary = null, recommendation = null),
+            "Hematocrit" to com.simats.drugssearch.network.DetectedParameter(value = bloodCountValues.hematocrit, unit = "%", minValue = 37.0, maxValue = 50.0, status = null, category = "Blood Count", condition = null, summary = null, recommendation = null)
         )
         "Metabolic Panel" -> mapOf(
-            "Blood Glucose" to metabolicPanelValues.bloodGlucose,
-            "Sodium" to metabolicPanelValues.sodium,
-            "Potassium" to metabolicPanelValues.potassium,
-            "Calcium" to metabolicPanelValues.calcium,
-            "Bicarbonate" to metabolicPanelValues.bicarbonate
+            "Blood Glucose" to com.simats.drugssearch.network.DetectedParameter(value = metabolicPanelValues.bloodGlucose, unit = "mg/dL", minValue = 70.0, maxValue = 100.0, status = null, category = "Metabolic Panel", condition = null, summary = null, recommendation = null),
+            "Sodium" to com.simats.drugssearch.network.DetectedParameter(value = metabolicPanelValues.sodium, unit = "mEq/L", minValue = 135.0, maxValue = 145.0, status = null, category = "Metabolic Panel", condition = null, summary = null, recommendation = null),
+            "Potassium" to com.simats.drugssearch.network.DetectedParameter(value = metabolicPanelValues.potassium, unit = "mEq/L", minValue = 3.5, maxValue = 5.1, status = null, category = "Metabolic Panel", condition = null, summary = null, recommendation = null),
+            "Calcium" to com.simats.drugssearch.network.DetectedParameter(value = metabolicPanelValues.calcium, unit = "mg/dL", minValue = 8.5, maxValue = 10.5, status = null, category = "Metabolic Panel", condition = null, summary = null, recommendation = null),
+            "Bicarbonate" to com.simats.drugssearch.network.DetectedParameter(value = metabolicPanelValues.bicarbonate, unit = "mEq/L", minValue = 22.0, maxValue = 29.0, status = null, category = "Metabolic Panel", condition = null, summary = null, recommendation = null)
         )
         "Lipid Profile" -> mapOf(
-            "Total Cholesterol" to lipidProfileValues.totalCholesterol,
-            "HDL Cholesterol" to lipidProfileValues.hdlCholesterol,
-            "LDL Cholesterol" to lipidProfileValues.ldlCholesterol,
-            "Triglycerides" to lipidProfileValues.triglycerides
+            "Total Cholesterol" to com.simats.drugssearch.network.DetectedParameter(value = lipidProfileValues.totalCholesterol, unit = "mg/dL", minValue = 0.0, maxValue = 200.0, status = null, category = "Lipid Profile", condition = null, summary = null, recommendation = null),
+            "HDL Cholesterol" to com.simats.drugssearch.network.DetectedParameter(value = lipidProfileValues.hdlCholesterol, unit = "mg/dL", minValue = 40.0, maxValue = 60.0, status = null, category = "Lipid Profile", condition = null, summary = null, recommendation = null),
+            "LDL Cholesterol" to com.simats.drugssearch.network.DetectedParameter(value = lipidProfileValues.ldlCholesterol, unit = "mg/dL", minValue = 0.0, maxValue = 100.0, status = null, category = "Lipid Profile", condition = null, summary = null, recommendation = null),
+            "Triglycerides" to com.simats.drugssearch.network.DetectedParameter(value = lipidProfileValues.triglycerides, unit = "mg/dL", minValue = 0.0, maxValue = 150.0, status = null, category = "Lipid Profile", condition = null, summary = null, recommendation = null)
         )
         "Kidney Function" -> mapOf(
-            "Creatinine" to kidneyFunctionValues.creatinine,
-            "BUN" to kidneyFunctionValues.bun,
-            "eGFR" to kidneyFunctionValues.egfr,
-            "Uric Acid" to kidneyFunctionValues.uricAcid
+            "Creatinine" to com.simats.drugssearch.network.DetectedParameter(value = kidneyFunctionValues.creatinine, unit = "mg/dL", minValue = 0.7, maxValue = 1.3, status = null, category = "Kidney Function", condition = null, summary = null, recommendation = null),
+            "BUN" to com.simats.drugssearch.network.DetectedParameter(value = kidneyFunctionValues.bun, unit = "mg/dL", minValue = 7.0, maxValue = 20.0, status = null, category = "Kidney Function", condition = null, summary = null, recommendation = null),
+            "eGFR" to com.simats.drugssearch.network.DetectedParameter(value = kidneyFunctionValues.egfr, unit = "mL/min/1.73m²", minValue = 90.0, maxValue = 120.0, status = null, category = "Kidney Function", condition = null, summary = null, recommendation = null),
+            "Uric Acid" to com.simats.drugssearch.network.DetectedParameter(value = kidneyFunctionValues.uricAcid, unit = "mg/dL", minValue = 3.4, maxValue = 7.0, status = null, category = "Kidney Function", condition = null, summary = null, recommendation = null)
         )
         "Liver Function" -> mapOf(
-            "SGOT" to liverFunctionValues.sgot,
-            "SGPT" to liverFunctionValues.sgpt,
-            "ALP" to liverFunctionValues.alp,
-            "Total Bilirubin" to liverFunctionValues.totalBilirubin,
-            "Direct Bilirubin" to liverFunctionValues.directBilirubin,
-            "Albumin" to liverFunctionValues.albumin,
-            "Total Protein" to liverFunctionValues.totalProtein,
-            "GGT" to liverFunctionValues.ggt
+            "SGOT" to com.simats.drugssearch.network.DetectedParameter(value = liverFunctionValues.sgot, unit = "U/L", minValue = 0.0, maxValue = 40.0, status = null, category = "Liver Function", condition = null, summary = null, recommendation = null),
+            "SGPT" to com.simats.drugssearch.network.DetectedParameter(value = liverFunctionValues.sgpt, unit = "U/L", minValue = 0.0, maxValue = 40.0, status = null, category = "Liver Function", condition = null, summary = null, recommendation = null),
+            "ALP" to com.simats.drugssearch.network.DetectedParameter(value = liverFunctionValues.alp, unit = "U/L", minValue = 44.0, maxValue = 147.0, status = null, category = "Liver Function", condition = null, summary = null, recommendation = null),
+            "Total Bilirubin" to com.simats.drugssearch.network.DetectedParameter(value = liverFunctionValues.totalBilirubin, unit = "mg/dL", minValue = 0.1, maxValue = 1.2, status = null, category = "Liver Function", condition = null, summary = null, recommendation = null),
+            "Direct Bilirubin" to com.simats.drugssearch.network.DetectedParameter(value = liverFunctionValues.directBilirubin, unit = "mg/dL", minValue = 0.0, maxValue = 0.3, status = null, category = "Liver Function", condition = null, summary = null, recommendation = null),
+            "Albumin" to com.simats.drugssearch.network.DetectedParameter(value = liverFunctionValues.albumin, unit = "g/dL", minValue = 3.4, maxValue = 5.4, status = null, category = "Liver Function", condition = null, summary = null, recommendation = null),
+            "Total Protein" to com.simats.drugssearch.network.DetectedParameter(value = liverFunctionValues.totalProtein, unit = "g/dL", minValue = 6.0, maxValue = 8.3, status = null, category = "Liver Function", condition = null, summary = null, recommendation = null),
+            "GGT" to com.simats.drugssearch.network.DetectedParameter(value = liverFunctionValues.ggt, unit = "U/L", minValue = 9.0, maxValue = 48.0, status = null, category = "Liver Function", condition = null, summary = null, recommendation = null)
         )
         "Thyroid Panel" -> mapOf(
-            "TSH" to thyroidPanelValues.tsh,
-            "Free T4" to thyroidPanelValues.freeT4,
-            "Free T3" to thyroidPanelValues.freeT3,
-            "Total T4" to thyroidPanelValues.totalT4,
-            "Total T3" to thyroidPanelValues.totalT3
+            "TSH" to com.simats.drugssearch.network.DetectedParameter(value = thyroidPanelValues.tsh, unit = "µIU/mL", minValue = 0.4, maxValue = 4.0, status = null, category = "Thyroid Panel", condition = null, summary = null, recommendation = null),
+            "Free T4" to com.simats.drugssearch.network.DetectedParameter(value = thyroidPanelValues.freeT4, unit = "ng/dL", minValue = 0.8, maxValue = 1.8, status = null, category = "Thyroid Panel", condition = null, summary = null, recommendation = null),
+            "Free T3" to com.simats.drugssearch.network.DetectedParameter(value = thyroidPanelValues.freeT3, unit = "pg/mL", minValue = 2.3, maxValue = 4.2, status = null, category = "Thyroid Panel", condition = null, summary = null, recommendation = null),
+            "Total T4" to com.simats.drugssearch.network.DetectedParameter(value = thyroidPanelValues.totalT4, unit = "µg/dL", minValue = 5.0, maxValue = 12.0, status = null, category = "Thyroid Panel", condition = null, summary = null, recommendation = null),
+            "Total T3" to com.simats.drugssearch.network.DetectedParameter(value = thyroidPanelValues.totalT3, unit = "ng/dL", minValue = 80.0, maxValue = 200.0, status = null, category = "Thyroid Panel", condition = null, summary = null, recommendation = null)
         )
         else -> reviewValuesMap
     }
@@ -320,105 +327,106 @@ fun AppNavigation() {
 
     // Helper to safely get value from map
     fun getVal(map: Map<String, String>, key: String): String = map[key] ?: ""
-
-    when (currentScreen) {
-        Screen.Splash -> SplashScreen(onSplashComplete = {
-            handleSplashComplete()
-        })
-        
-        Screen.Welcome -> WelcomeScreen(
-            onLoginClick = { navigateTo(Screen.Login) },
-            onCreateAccountClick = { navigateTo(Screen.Register) }
-        )
-        
-        Screen.Login -> LoginScreen(
-            onLoginSuccess = { userId, fullName, email, phone, dob, gender, profileImage -> 
-                loggedInUserId = userId
-                loggedInUserName = fullName
-                userEmail = email
-                userPhone = phone
-                userDob = dob
-                userGender = gender
-                if (profileImage != null) {
-                    loggedInProfileImage = profileImage
-                }
-                sessionManager.saveSession(userId, fullName, email, phone, dob, gender, profileImage)
-                navigateTo(Screen.Dashboard) 
-            },
-            onRegisterClick = { navigateTo(Screen.Register) },
-            onForgotPasswordClick = { navigateTo(Screen.ForgotPassword) },
-            onPrivacyPolicyClick = { showPrivacyPolicy = true },
-            onTermsOfServiceClick = { showTermsOfService = true },
-            onAdminLoginClick = { navigateTo(Screen.AdminLogin) }
-        )
-        
-        Screen.Register -> RegisterScreen(
-            onCreateAccountClick = { _, email, _, _ -> 
-                userEmail = email
-                navigateTo(Screen.VerifyEmail) 
-            },
-            onLoginClick = { navigateTo(Screen.Login) },
-            onPrivacyPolicyClick = { showPrivacyPolicy = true },
-            onTermsOfServiceClick = { showTermsOfService = true }
-        )
-        
-        Screen.VerifyEmail -> VerifyEmailScreen(
-            email = userEmail,
-            onVerifyClick = { _ -> navigateTo(Screen.Login) },
-            onBackClick = { navigateTo(Screen.Register) }
-        )
-        
-        Screen.Dashboard -> DashboardScreen(
-            userName = loggedInUserName,
-            totalReports = dashboardTotalReports,
-            normalReports = dashboardNormalReports,
-            abnormalReports = dashboardAbnormalReports,
-            recentReports = recentReports,
-            profileImage = loggedInProfileImage,
-            onUploadClick = { navigateTo(Screen.Upload) },
-            onSearchClick = { navigateTo(Screen.SearchDrugInformation) },
-            onHistoryClick = { navigateTo(Screen.ReportHistory) },
-            onProfileClick = { navigateTo(Screen.Profile) },
-            onHomeClick = { /* Already on dashboard */ },
-            onViewAllClick = { navigateTo(Screen.ReportHistory) },
-            onPrivacyPolicyClick = { showPrivacyPolicy = true },
-            onTermsOfServiceClick = { showTermsOfService = true }
-        )
-        
-        Screen.Upload -> UploadScreen(
-            onBackClick = { navigateTo(Screen.Dashboard) },
-            onHomeClick = { navigateTo(Screen.Dashboard) },
-            onUploadReportClick = { navigateTo(Screen.FileSelected) },
-            onManualEntryClick = { 
-                currentReportId = null // Reset for manual entry
-                navigateTo(Screen.ManualEntry) 
-            },
-            onSearchClick = { navigateTo(Screen.SearchDrugInformation) },
-            onHistoryClick = { navigateTo(Screen.ReportHistory) },
-            onProfileClick = { navigateTo(Screen.Profile) }
-        )
-        
-        Screen.FileSelected -> FileSelectedScreen(
-            userId = loggedInUserId,
-            onBackClick = { navigateTo(Screen.Upload) },
-            onHomeClick = { navigateTo(Screen.Dashboard) },
-            onChooseDifferentFileClick = { /* Handled in screen */ },
-            onUploadSuccess = { values, category, recommendations, patientDetails, reportId ->
-                selectedCategory = category
-                drugRecommendations = recommendations
-                currentPatientDetails = patientDetails
-                currentReportId = reportId
-                // For OCR uploads, pass ALL extracted parameters to review/analysis
-                // Don't filter through category-specific models — those are for manual entry only
-                reviewValuesMap = values
-                navigateTo(Screen.ReviewValues)
-            },
-            onSearchClick = { navigateTo(Screen.SearchDrugInformation) },
-            onHistoryClick = { navigateTo(Screen.ReportHistory) },
-            onProfileClick = { navigateTo(Screen.Profile) }
-        )
-        
-        Screen.ReviewValues -> {
+    Box(modifier = Modifier.fillMaxSize()) {
+        when (currentScreen) {
+            Screen.Splash -> SplashScreen(onSplashComplete = {
+                handleSplashComplete()
+            })
+            
+            Screen.Welcome -> WelcomeScreen(
+                onLoginClick = { navigateTo(Screen.Login) },
+                onCreateAccountClick = { navigateTo(Screen.Register) }
+            )
+            
+            Screen.Login -> LoginScreen(
+                onLoginSuccess = { userId, fullName, email, phone, dob, gender, profileImage -> 
+                    loggedInUserId = userId
+                    loggedInUserName = fullName
+                    userEmail = email
+                    userPhone = phone
+                    userDob = dob
+                    userGender = gender
+                    if (profileImage != null) {
+                        loggedInProfileImage = profileImage
+                    }
+                    sessionManager.saveSession(userId, fullName, email, phone, dob, gender, profileImage)
+                    navigateTo(Screen.Dashboard) 
+                },
+                onRegisterClick = { navigateTo(Screen.Register) },
+                onForgotPasswordClick = { navigateTo(Screen.ForgotPassword) },
+                onPrivacyPolicyClick = { showPrivacyPolicy = true },
+                onTermsOfServiceClick = { showTermsOfService = true },
+                onAdminLoginClick = { navigateTo(Screen.AdminLogin) }
+            )
+            
+            Screen.Register -> RegisterScreen(
+                onCreateAccountClick = { _, email, _, _ -> 
+                    userEmail = email
+                    navigateTo(Screen.VerifyEmail) 
+                },
+                onLoginClick = { navigateTo(Screen.Login) },
+                onPrivacyPolicyClick = { showPrivacyPolicy = true },
+                onTermsOfServiceClick = { showTermsOfService = true }
+            )
+            
+            Screen.VerifyEmail -> VerifyEmailScreen(
+                email = userEmail,
+                onVerifyClick = { _ -> navigateTo(Screen.Login) },
+                onBackClick = { navigateTo(Screen.Register) }
+            )
+            
+            Screen.Dashboard -> DashboardScreen(
+                userName = loggedInUserName,
+                totalReports = dashboardTotalReports,
+                normalReports = dashboardNormalReports,
+                abnormalReports = dashboardAbnormalReports,
+                recentReports = recentReports,
+                profileImage = loggedInProfileImage,
+                onUploadClick = { navigateTo(Screen.Upload) },
+                onSearchClick = { navigateTo(Screen.SearchDrugInformation) },
+                onHistoryClick = { navigateTo(Screen.ReportHistory) },
+                onProfileClick = { navigateTo(Screen.Profile) },
+                onHomeClick = { /* Already on dashboard */ },
+                onViewAllClick = { navigateTo(Screen.ReportHistory) },
+                onPrivacyPolicyClick = { showPrivacyPolicy = true },
+                onTermsOfServiceClick = { showTermsOfService = true }
+            )
+            
+            Screen.Upload -> UploadScreen(
+                onBackClick = { navigateTo(Screen.Dashboard) },
+                onHomeClick = { navigateTo(Screen.Dashboard) },
+                onUploadReportClick = { navigateTo(Screen.FileSelected) },
+                onManualEntryClick = { 
+                    currentReportId = null // Reset for manual entry
+                    reviewValuesMap = emptyMap()
+                    navigateTo(Screen.ManualEntry) 
+                },
+                onSearchClick = { navigateTo(Screen.SearchDrugInformation) },
+                onHistoryClick = { navigateTo(Screen.ReportHistory) },
+                onProfileClick = { navigateTo(Screen.Profile) }
+            )
+            
+            Screen.FileSelected -> FileSelectedScreen(
+                userId = loggedInUserId,
+                onBackClick = { navigateTo(Screen.Upload) },
+                onHomeClick = { navigateTo(Screen.Dashboard) },
+                onChooseDifferentFileClick = { /* Handled in screen */ },
+                onUploadSuccess = { values, category, recommendations, patientDetails, reportId ->
+                    selectedCategory = category
+                    drugRecommendations = recommendations
+                    currentPatientDetails = patientDetails
+                    currentReportId = reportId
+                    // For OCR uploads, pass ALL extracted parameters to review/analysis
+                    // Don't filter through category-specific models — those are for manual entry only
+                    reviewValuesMap = values
+                    navigateTo(Screen.ReviewValues)
+                },
+                onSearchClick = { navigateTo(Screen.SearchDrugInformation) },
+                onHistoryClick = { navigateTo(Screen.ReportHistory) },
+                onProfileClick = { navigateTo(Screen.Profile) }
+            )
+            
+            Screen.ReviewValues -> {
             val editTargetScreen = when (selectedCategory) {
                  "Blood Count" -> Screen.BloodCountEntry
                  "Metabolic Panel" -> Screen.MetabolicPanelEntry
@@ -432,7 +440,7 @@ fun AppNavigation() {
             ReviewValuesScreen(
                 userId = loggedInUserId ?: 0,
                 categoryName = selectedCategory,
-                values = valuesForReview,
+                values = if (reviewValuesMap.isNotEmpty()) reviewValuesMap else valuesForReview,
                 initialPatientDetails = currentPatientDetails,
                 onBackClick = { navigateTo(Screen.Upload) },
                 onHomeClick = { navigateTo(Screen.Dashboard) },
@@ -458,45 +466,42 @@ fun AppNavigation() {
                                 bicarbonate = getVal(newValues, "Bicarbonate")
                             )
                         }
-                         "Lipid Profile" -> {
-                              lipidProfileValues = LipidProfileValues(
-                                  totalCholesterol = getVal(newValues, "Total Cholesterol"),
-                                  hdlCholesterol = getVal(newValues, "HDL Cholesterol"),
-                                  ldlCholesterol = getVal(newValues, "LDL Cholesterol"),
-                                  triglycerides = getVal(newValues, "Triglycerides")
-                              )
-                          }
+                        "Lipid Profile" -> {
+                            lipidProfileValues = LipidProfileValues(
+                                totalCholesterol = getVal(newValues, "Total Cholesterol"),
+                                hdlCholesterol = getVal(newValues, "HDL Cholesterol"),
+                                ldlCholesterol = getVal(newValues, "LDL Cholesterol"),
+                                triglycerides = getVal(newValues, "Triglycerides")
+                            )
+                        }
                         "Kidney Function" -> {
-                             kidneyFunctionValues = KidneyFunctionValues(
-                                 creatinine = getVal(newValues, "Creatinine"),
-                                 bun = getVal(newValues, "BUN"),
-                                 egfr = getVal(newValues, "eGFR"),
-                                 uricAcid = getVal(newValues, "Uric Acid")
-                             )
-                         }
+                            kidneyFunctionValues = KidneyFunctionValues(
+                                creatinine = getVal(newValues, "Creatinine"),
+                                bun = getVal(newValues, "BUN"),
+                                egfr = getVal(newValues, "eGFR"),
+                                uricAcid = getVal(newValues, "Uric Acid")
+                            )
+                        }
                         "Liver Function" -> {
-                             liverFunctionValues = LiverFunctionValues(
-                                 sgot = getVal(newValues, "SGOT"),
-                                 sgpt = getVal(newValues, "SGPT"),
-                                 alp = getVal(newValues, "ALP"),
-                                 totalBilirubin = getVal(newValues, "Total Bilirubin"),
-                                 directBilirubin = getVal(newValues, "Direct Bilirubin"),
-                                 albumin = getVal(newValues, "Albumin"),
-                                 totalProtein = getVal(newValues, "Total Protein"),
-                                 ggt = getVal(newValues, "GGT")
-                             )
-                         }
+                            liverFunctionValues = LiverFunctionValues(
+                                sgot = getVal(newValues, "SGOT"),
+                                sgpt = getVal(newValues, "SGPT"),
+                                alp = getVal(newValues, "ALP"),
+                                totalBilirubin = getVal(newValues, "Total Bilirubin"),
+                                directBilirubin = getVal(newValues, "Direct Bilirubin"),
+                                albumin = getVal(newValues, "Albumin"),
+                                totalProtein = getVal(newValues, "Total Protein"),
+                                ggt = getVal(newValues, "GGT")
+                            )
+                        }
                         "Thyroid Panel" -> {
-                             thyroidPanelValues = ThyroidPanelValues(
-                                 tsh = getVal(newValues, "TSH"),
-                                 freeT4 = getVal(newValues, "Free T4"),
-                                 freeT3 = getVal(newValues, "Free T3"),
-                                 totalT4 = getVal(newValues, "Total T4"),
-                                 totalT3 = getVal(newValues, "Total T3")
-                             )
-                         }
-                        else -> {
-                            reviewValuesMap = newValues.toMap()
+                            thyroidPanelValues = ThyroidPanelValues(
+                                tsh = getVal(newValues, "TSH"),
+                                freeT4 = getVal(newValues, "Free T4"),
+                                freeT3 = getVal(newValues, "Free T3"),
+                                totalT4 = getVal(newValues, "Total T4"),
+                                totalT3 = getVal(newValues, "Total T3")
+                            )
                         }
                     }
                 },
@@ -512,11 +517,23 @@ fun AppNavigation() {
                             // Update specific category values if needed (optional since we use valuesMap for request)
                             
                             val parameters = valuesMap.map { (k, v) ->
-                                ReportParameter(name = k, value = v, unit = "", isNormal = false) 
+                                val detail = valuesForReview[k]
+                                val unit = detail?.unit ?: ""
+                                val minV = detail?.minValue?.toString()?.toDoubleOrNull() ?: 0.0
+                                val maxV = detail?.maxValue?.toString()?.toDoubleOrNull() ?: 0.0
+                                val currentV = v.toDoubleOrNull() ?: 0.0
+                                val isNormal = if (minV == 0.0 && maxV == 0.0) true else currentV in minV..maxV
+                                
+                                com.simats.drugssearch.network.ReportParameter(
+                                    name = k, 
+                                    value = v, 
+                                    unit = unit, 
+                                    isNormal = isNormal
+                                ) 
                             }
                             
                             val req = SaveReportRequest(
-                                reportId = currentReportId, // Pass reportId
+                                reportId = currentReportId,
                                 userId = loggedInUserId ?: 0,
                                 category = selectedCategory,
                                 parameters = parameters,
@@ -592,6 +609,7 @@ fun AppNavigation() {
                 currentReportId = null
                 currentPatientDetails = null
                 currentRemarks = ""
+                reviewValuesMap = emptyMap()
                 
                 selectedCategory = category
                 navigateTo(when (category) {
@@ -1054,16 +1072,22 @@ fun AppNavigation() {
             },
             onEmailClick = {
                 val intent = Intent(Intent.ACTION_SENDTO).apply {
-                    data = Uri.parse("mailto:support@drugssearch.com")
+                    data = Uri.parse("mailto:help@drugssearch.com")
                     putExtra(Intent.EXTRA_SUBJECT, "Support Request - DrugsSearch")
                 }
                 context.startActivity(intent)
-            }
+            },
+            onChatClick = { navigateTo(Screen.Chat) }
         )
 
         Screen.FAQ -> FAQScreen(
             onBackClick = { navigateTo(Screen.HelpSupport) },
             onHomeClick = { navigateTo(Screen.Dashboard) }
+        )
+
+        Screen.Chat -> ChatScreen(
+            userId = loggedInUserId,
+            onBackClick = { navigateTo(Screen.HelpSupport) }
         )
 
         Screen.AdminLogin -> AdminLoginScreen(
@@ -1087,6 +1111,27 @@ fun AppNavigation() {
             }
         )
     }
+
+    // Persistent Floating Chat Button for user screens
+    val showFab = when (currentScreen) {
+        Screen.Dashboard, Screen.Upload, Screen.ReportHistory, 
+        Screen.SearchDrugInformation, Screen.Profile -> true
+        else -> false
+    }
+
+    if (showFab && !sessionManager.isAdminLoggedIn()) {
+        FloatingActionButton(
+            onClick = { navigateTo(Screen.Chat) },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(end = 16.dp, bottom = 80.dp),
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+        ) {
+            Icon(Icons.Outlined.Chat, contentDescription = "Chat with Assistant")
+        }
+    }
+}
 
     if (showPrivacyPolicy) {
         PrivacyPolicyScreen(

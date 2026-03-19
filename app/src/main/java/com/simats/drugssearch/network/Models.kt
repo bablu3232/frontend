@@ -154,6 +154,8 @@ data class OcrResponse(
 data class DetectedParameter(
     @SerializedName("value") val value: Any?, // Can be Double or String
     @SerializedName("unit") val unit: String?,
+    @SerializedName("min_value") val minValue: Any?,
+    @SerializedName("max_value") val maxValue: Any?,
     @SerializedName("status") val status: String?,
     @SerializedName("risk_level") val riskLevel: String? = "None",
     @SerializedName("deviation") val deviation: Double? = 0.0,
@@ -299,3 +301,19 @@ data class AdminDrugItem(
     @SerializedName("drug_category") val drugCategory: String?
 )
 
+// Chatbot
+data class ChatRequest(
+    @SerializedName("user_id") val userId: Int?,
+    @SerializedName("message") val message: String,
+    @SerializedName("chat_history") val chatHistory: List<ChatMessage>? = null
+)
+
+data class ChatMessage(
+    @SerializedName("user") val user: String? = null,
+    @SerializedName("ai") val ai: String? = null
+)
+
+data class ChatResponse(
+    @SerializedName("reply") val reply: String?,
+    @SerializedName("error") val error: String? = null
+)

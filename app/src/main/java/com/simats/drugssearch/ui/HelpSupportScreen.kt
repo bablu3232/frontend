@@ -113,10 +113,18 @@ fun HelpSupportScreen(
                     SupportOptionCard(
                         icon = Icons.Default.Email,
                         title = "Email Us",
-                        subtitle = "support@drugssearch.com",
-                        color = Color(0xFFE3F2FD), // Light Blue
-                        iconTint = Color(0xFF2196F3),
+                        subtitle = "help@drugssearch.com",
+                        color = Color(0xFFE0F2FE), // Light Blue
+                        iconTint = Color(0xFF0284C7),
                         onClick = onEmailClick
+                    )
+                    SupportOptionCard(
+                        icon = Icons.Default.QuestionAnswer,
+                        title = "Chat with AI",
+                        subtitle = "Instant medical help",
+                        color = Color(0xFFFFF7ED), // Light Orange
+                        iconTint = Color(0xFFF59E0B),
+                        onClick = onChatClick
                     )
                 }
 

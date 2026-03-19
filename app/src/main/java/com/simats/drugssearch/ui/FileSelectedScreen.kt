@@ -79,7 +79,7 @@ fun FileSelectedScreen(
     onBackClick: () -> Unit = {},
     onHomeClick: () -> Unit = {},
     onChooseDifferentFileClick: () -> Unit = {},
-    onUploadSuccess: (Map<String, String>, String, List<com.simats.drugssearch.ui.DrugRecommendation>, com.simats.drugssearch.network.PatientDetails?, Int?) -> Unit = { _, _, _, _, _ -> },
+    onUploadSuccess: (Map<String, com.simats.drugssearch.network.DetectedParameter>, String, List<com.simats.drugssearch.ui.DrugRecommendation>, com.simats.drugssearch.network.PatientDetails?, Int?) -> Unit = { _, _, _, _, _ -> },
     onSearchClick: () -> Unit = {},
     onHistoryClick: () -> Unit = {},
     onProfileClick: () -> Unit = {}
@@ -421,7 +421,7 @@ fun FileSelectedScreen(
                                                 val extractedTextJson = uploadResponse.extractedText ?: ""
                                                 val reportId = uploadResponse.reportId // Capture reportId
 
-                                                var values = emptyMap<String, String>()
+                                                var values = emptyMap<String, com.simats.drugssearch.network.DetectedParameter>()
                                                 var category = "General"
                                                 var recommendations = mutableListOf<com.simats.drugssearch.ui.DrugRecommendation>()
                                                 var patientDetails: com.simats.drugssearch.network.PatientDetails? = null
@@ -429,7 +429,6 @@ fun FileSelectedScreen(
                                                 var hasError = false
                                                 if (extractedTextJson.isNotEmpty()) {
                                                     try {
-                                                        // Check if the response is an error JSON
                                                         // Check if the response is an error JSON
                                                         if (extractedTextJson.contains("\"error\"")) {
                                                             try {
@@ -454,9 +453,7 @@ fun FileSelectedScreen(
                                                             patientDetails = ocrResponse.patientDetails
                                                             
                                                             // Extract values from parameters map
-                                                            values = ocrResponse.parameters?.mapValues { entry -> 
-                                                                entry.value.value.toString() 
-                                                            } ?: emptyMap()
+                                                            values = ocrResponse.parameters ?: emptyMap()
 
                                                             // Extract recommendations
                                                             ocrResponse.parameters?.forEach { (name, detail) ->

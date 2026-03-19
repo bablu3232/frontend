@@ -64,13 +64,7 @@ private val AmberBorder = Color(0xFFFDBA74)
 fun ReviewValuesScreen(
     userId: Int,
     categoryName: String = "Blood Count",
-    values: Map<String, String> = mapOf(
-        "Hemoglobin" to "323",
-        "Wbc" to "434",
-        "Rbc" to "2424",
-        "Platelets" to "242",
-        "Hematocrit" to "241.1"
-    ),
+    values: Map<String, com.simats.drugssearch.network.DetectedParameter> = emptyMap(),
     initialPatientDetails: com.simats.drugssearch.network.PatientDetails? = null,
     onBackClick: () -> Unit = {},
     onHomeClick: () -> Unit = {},
@@ -89,6 +83,15 @@ fun ReviewValuesScreen(
     // We use a mutableStateMap to track edits locally
     val editedValues = remember { mutableStateMapOf<String, String>() }
     
+    // Initialize editedValues from passed values only once
+    LaunchedEffect(values) {
+        if (editedValues.isEmpty()) {
+            values.forEach { (k, v) ->
+                editedValues[k] = v.value?.toString() ?: ""
+            }
+        }
+    }
+    
     // Patient Details State
     var patientName by remember { mutableStateOf(initialPatientDetails?.name ?: "") }
     var patientAge by remember { mutableStateOf(initialPatientDetails?.age ?: "") }
@@ -98,12 +101,6 @@ fun ReviewValuesScreen(
     // Add Missing Parameter State
     var newParamName by remember { mutableStateOf("") }
     var newParamValue by remember { mutableStateOf("") }
-
-    // Initialize/Reset editedValues when values or isEditing changes
-    LaunchedEffect(values) {
-        editedValues.clear()
-        editedValues.putAll(values)
-    }
 
     Scaffold(
         bottomBar = {
@@ -369,65 +366,101 @@ fun ReviewValuesScreen(
                             keys.forEachIndexed { index, label ->
                                 if (isEditing) {
                                     // Edit Mode: Show OutlinedTextField with red remove button
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        OutlinedTextField(
-                                            value = editedValues[label] ?: "",
-                                            onValueChange = { newValue ->
-                                                editedValues[label] = newValue
-                                            },
-                                            label = { Text(label) },
-                                            modifier = Modifier
-                                                .weight(1f)
-                                                .padding(vertical = 8.dp),
-                                            singleLine = true,
-                                            colors = OutlinedTextFieldDefaults.colors(
-                                                focusedTextColor = Color.Black,
-                                                unfocusedTextColor = Color.Black,
-                                                focusedContainerColor = Color.White,
-                                                unfocusedContainerColor = Color.White,
-                                                focusedLabelColor = PrimaryBlue,
-                                                unfocusedLabelColor = TextGrayColor
-                                            )
-                                        )
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        IconButton(
-                                            onClick = { editedValues.remove(label) },
-                                            modifier = Modifier.size(36.dp)
+                                    Column(modifier = Modifier.fillMaxWidth()) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            Icon(
-                                                imageVector = Icons.Default.Close,
-                                                contentDescription = "Remove $label",
-                                                tint = Color(0xFFEF4444),
-                                                modifier = Modifier.size(20.dp)
+                                            OutlinedTextField(
+                                                value = editedValues[label] ?: "",
+                                                onValueChange = { newValue ->
+                                                    editedValues[label] = newValue
+                                                },
+                                                label = { Text(label) },
+                                                modifier = Modifier
+                                                    .weight(1f)
+                                                    .padding(vertical = 8.dp),
+                                                singleLine = true,
+                                                colors = OutlinedTextFieldDefaults.colors(
+                                                    focusedTextColor = Color.Black,
+                                                    unfocusedTextColor = Color.Black,
+                                                    focusedContainerColor = Color.White,
+                                                    unfocusedContainerColor = Color.White,
+                                                    focusedLabelColor = PrimaryBlue,
+                                                    unfocusedLabelColor = TextGrayColor
+                                                )
+                                            )
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            IconButton(
+                                                onClick = { editedValues.remove(label) },
+                                                modifier = Modifier.size(36.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Close,
+                                                    contentDescription = "Remove $label",
+                                                    tint = Color(0xFFEF4444),
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                            }
+                                        }
+                                        
+                                        // Show reference range if available in Edit Mode
+                                        val detail = values[label]
+                                        if (detail != null && detail.minValue != null && detail.maxValue != null) {
+                                            Text(
+                                                text = "Ref: ${detail.minValue} - ${detail.maxValue} ${detail.unit ?: ""}",
+                                                style = MaterialTheme.typography.bodySmall.copy(
+                                                    fontSize = 11.sp,
+                                                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                                                ),
+                                                color = TextGrayColor,
+                                                modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
                                             )
                                         }
                                     }
                                 } else {
                                     // View Mode: Show Text
-                                    Row(
+                                    val detail = values[label]
+                                    Column(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .padding(vertical = 12.dp),
-                                        horizontalArrangement = Arrangement.SpaceBetween
+                                            .padding(vertical = 12.dp)
                                     ) {
-                                        Text(
-                                            text = label,
-                                            style = MaterialTheme.typography.bodyMedium.copy(
-                                                fontSize = 15.sp
-                                            ),
-                                            color = TextDarkColor
-                                        )
-                                        Text(
-                                            text = editedValues[label] ?: "",
-                                            style = MaterialTheme.typography.bodyMedium.copy(
-                                                fontWeight = FontWeight.SemiBold,
-                                                fontSize = 15.sp
-                                            ),
-                                            color = TextDarkColor
-                                        )
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = label,
+                                                style = MaterialTheme.typography.bodyMedium.copy(
+                                                    fontSize = 15.sp,
+                                                    fontWeight = FontWeight.Medium
+                                                ),
+                                                color = TextDarkColor
+                                            )
+                                            Text(
+                                                text = "${editedValues[label] ?: ""} ${detail?.unit ?: ""}",
+                                                style = MaterialTheme.typography.bodyMedium.copy(
+                                                    fontWeight = FontWeight.Bold,
+                                                    fontSize = 15.sp
+                                                ),
+                                                color = PrimaryBlue
+                                            )
+                                        }
+                                        
+                                        // Show reference range if available
+                                        if (detail != null && detail.minValue != null && detail.maxValue != null) {
+                                            Spacer(modifier = Modifier.height(2.dp))
+                                            Text(
+                                                text = "Ref: ${detail.minValue} - ${detail.maxValue} ${detail.unit ?: ""}",
+                                                style = MaterialTheme.typography.bodySmall.copy(
+                                                    fontSize = 11.sp,
+                                                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                                                ),
+                                                color = TextGrayColor
+                                            )
+                                        }
                                     }
                                     if (index < keys.size - 1) {
                                         HorizontalDivider(color = CardBorderColor)

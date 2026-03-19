@@ -25,13 +25,6 @@ interface ApiService {
     ): Response<UploadResponse>
 
     @Multipart
-    @POST("upload_report_gemini.php")
-    suspend fun uploadReportGemini(
-        @Part("user_id") userId: okhttp3.RequestBody,
-        @Part file: MultipartBody.Part
-    ): Response<UploadResponse>
-
-    @Multipart
     @POST("upload_report_ocrspace.php")
     suspend fun uploadReportOcrSpace(
         @Part("user_id") userId: okhttp3.RequestBody,
@@ -120,6 +113,9 @@ interface ApiService {
 
     @GET("admin_user_stats.php")
     suspend fun getAdminUserStats(@Query("user_id") userId: Int): Response<AdminUserStatsResponse>
+
+    @POST("chatbot_proxy.php")
+    suspend fun sendMessage(@Body request: ChatRequest): Response<ChatResponse>
 }
 
 // RegisterRequest, RegisterResponse, LoginRequest, LoginResponse, UploadResponse are in Models.kt

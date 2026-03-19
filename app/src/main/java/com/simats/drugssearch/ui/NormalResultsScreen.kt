@@ -82,7 +82,13 @@ private fun getUnit(name: String): String {
     return normalRangesWithUnits[name]?.second ?: ""
 }
 
-private fun getNormalRangeDisplay(name: String): String {
+private fun getNormalRangeDisplay(name: String, details: com.simats.drugssearch.network.DetectedParameter): String {
+    val minVal = details.minValue?.toString()?.removeSuffix(".0")
+    val maxVal = details.maxValue?.toString()?.removeSuffix(".0")
+    if (minVal != null && maxVal != null) {
+        val unit = details.unit ?: ""
+        return "$minVal - $maxVal $unit".trim()
+    }
     return normalRangesWithUnits[name]?.third ?: ""
 }
 
@@ -191,7 +197,7 @@ fun NormalResultsScreen(
                         parameterName = name,
                         yourValue = displayValue,
                         unit = displayUnit,
-                        normalRange = getNormalRangeDisplay(name),
+                        normalRange = getNormalRangeDisplay(name, details),
                         onClick = { onParameterClick(name) }
                     )
                     Spacer(modifier = Modifier.height(12.dp))
