@@ -58,8 +58,8 @@ private val ErrorColor = Color(0xFFEF4444)
 // Validation functions
 private fun isValidEmail(email: String): Boolean {
     val emailPattern = android.util.Patterns.EMAIL_ADDRESS
-    // Strict validation: Must be a valid email format AND contain "gmail" (assuming @gmail.com)
-    return email.isNotEmpty() && emailPattern.matcher(email).matches() && email.lowercase().contains("gmail")
+    // Broad validation: Must be a valid email format (supports college/institutional emails)
+    return email.isNotEmpty() && emailPattern.matcher(email).matches()
 }
 
 private fun isValidName(name: String): Boolean {
@@ -644,7 +644,7 @@ fun RegisterScreen(
                             
                             // Validate email
                             if (!isValidEmail(email)) {
-                                emailError = "Please enter a valid Gmail address (e.g., user@gmail.com)"
+                                emailError = "Please enter a valid email address"
                                 hasError = true
                             }
                             
