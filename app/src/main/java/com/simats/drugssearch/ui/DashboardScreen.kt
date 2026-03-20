@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.simats.drugssearch.ui.theme.DrugsSearchTheme
 import com.simats.drugssearch.network.UserReport
+import com.simats.drugssearch.network.RetrofitClient
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
@@ -414,7 +415,7 @@ fun DashboardTopBar(
             contentAlignment = Alignment.Center
         ) {
             if (profileImage.isNotEmpty()) {
-                val fullUrl = if (profileImage.startsWith("http")) profileImage else "http://10.88.244.212/drugssearch/$profileImage"
+                val fullUrl = if (profileImage.startsWith("http")) profileImage else "${RetrofitClient.IMAGE_BASE_URL}$profileImage"
                 AsyncImage(
                     model = fullUrl,
                     contentDescription = "Profile Picture",

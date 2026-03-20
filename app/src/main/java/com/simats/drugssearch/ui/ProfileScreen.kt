@@ -34,6 +34,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.simats.drugssearch.ui.theme.DrugsSearchTheme
+import com.simats.drugssearch.network.RetrofitClient
 
 // Profile Screen Colors
 private val PrimaryBlue = Color(0xFF2196F3)
@@ -345,7 +346,7 @@ private fun ProfileHeaderSection(
             contentAlignment = Alignment.Center
         ) {
             if (profileImage.isNotEmpty()) {
-                val fullUrl = if (profileImage.startsWith("http")) profileImage else "http://10.88.244.212/drugssearch/$profileImage"
+                val fullUrl = if (profileImage.startsWith("http")) profileImage else "${RetrofitClient.IMAGE_BASE_URL}$profileImage"
                 AsyncImage(
                     model = fullUrl,
                     contentDescription = "Profile Picture",

@@ -73,11 +73,20 @@ fun PersonalInformationScreen(
     var gender by remember(initialGender) { mutableStateOf(initialGender) }
     var profileImage by remember(initialProfileImage) { mutableStateOf(initialProfileImage) }
     
+    var nameError by remember { mutableStateOf<String?>(null) }
+    var emailError by remember { mutableStateOf<String?>(null) }
+    var phoneError by remember { mutableStateOf<String?>(null) }
+    
     var isLoading by remember { mutableStateOf(false) }
     var isUploadingImage by remember { mutableStateOf(false) }
     var apiMessage by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+
+    // Validation Regex
+    val nameRegex = Regex("^[a-zA-Z\\s]+$")
+    val emailRegex = Regex("^[A-Za-z0-9._%+-]+@([a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,}\$")
+    val indianPhoneRegex = Regex("^[6-9]\\d{9}\$")
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -184,7 +193,7 @@ fun PersonalInformationScreen(
                                 if (isUploadingImage) {
                                     CircularProgressIndicator(color = Color.White)
                                 } else if (profileImage.isNotEmpty()) {
-                                    val fullUrl = if (profileImage.startsWith("http")) profileImage else "http://10.88.244.212/drugssearch/$profileImage"
+                                    val fullUrl = if (profileImage.startsWith("http")) profileImage else "${RetrofitClient.IMAGE_BASE_URL}$profileImage"
                                     AsyncImage(
                                         model = fullUrl,
                                         contentDescription = "Profile Picture",
@@ -225,21 +234,33 @@ fun PersonalInformationScreen(
                         ProfileInputField(
                             label = "Full Name",
                             value = name,
-                            onValueChange = { name = it }
+                            error = nameError,
+                            onValueChange = { 
+                                name = it
+                                nameError = null
+                            }
                         )
 
                         // Email
                         ProfileInputField(
                             label = "Email",
                             value = email,
-                            onValueChange = { email = it }
+                            error = emailError,
+                            onValueChange = { 
+                                email = it
+                                emailError = null
+                            }
                         )
 
                         // Phone Number
                         ProfileInputField(
                             label = "Phone Number",
                             value = phone,
-                            onValueChange = { phone = it }
+                            error = phoneError,
+                            onValueChange = { 
+                                phone = it
+                                phoneError = null
+                            }
                         )
 
                         // Date of Birth
@@ -376,8 +397,37 @@ fun PersonalInformationScreen(
 
                             Button(
                                 onClick = { 
-                                    isLoading = true
+                                    // Validation
                                     apiMessage = null
+                                    var hasError = false
+                                    
+                                    if (name.isBlank()) {
+                                        nameError = "Name cannot be empty"
+                                        hasError = true
+                                    } else if (!nameRegex.matches(name)) {
+                                        nameError = "Name must contain only characters"
+                                        hasError = true
+                                    }
+                                    
+                                    if (email.isBlank()) {
+                                        emailError = "Email cannot be empty"
+                                        hasError = true
+                                    } else if (!emailRegex.matches(email)) {
+                                        emailError = "Invalid email format"
+                                        hasError = true
+                                    }
+                                    
+                                    if (phone.isBlank()) {
+                                        phoneError = "Phone number cannot be empty"
+                                        hasError = true
+                                    } else if (!indianPhoneRegex.matches(phone)) {
+                                        phoneError = "Enter a valid 10-digit Indian number"
+                                        hasError = true
+                                    }
+                                    
+                                    if (hasError) return@Button
+                                    
+                                    isLoading = true
                                     scope.launch {
                                         try {
                                             // Parse the display date (dd/MM/yyyy)
@@ -463,7 +513,8 @@ fun PersonalInformationScreen(
 private fun ProfileInputField(
     label: String,
     value: String,
-    onValueChange: (String) -> Unit
+    onValueChange: (String) -> Unit,
+    error: String? = null
 ) {
     Column {
         Text(
@@ -480,13 +531,18 @@ private fun ProfileInputField(
             onValueChange = onValueChange,
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
+            isError = error != null,
+            supportingText = if (error != null) {
+                { Text(text = error, color = MaterialTheme.colorScheme.error) }
+            } else null,
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = PrimaryBlue,
                 unfocusedBorderColor = CardBorderColor,
                 focusedContainerColor = Color.White,
                 unfocusedContainerColor = Color.White,
                 focusedTextColor = TextDarkColor,
-                unfocusedTextColor = TextDarkColor
+                unfocusedTextColor = TextDarkColor,
+                errorBorderColor = Color.Red
             ),
             singleLine = true
         )
