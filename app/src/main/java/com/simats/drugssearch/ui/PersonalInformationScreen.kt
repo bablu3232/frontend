@@ -412,9 +412,24 @@ fun PersonalInformationScreen(
                                     if (email.isBlank()) {
                                         emailError = "Email cannot be empty"
                                         hasError = true
-                                    } else if (!emailRegex.matches(email)) {
-                                        emailError = "Invalid email format"
-                                        hasError = true
+                                    } else {
+                                        val emailPattern = android.util.Patterns.EMAIL_ADDRESS
+                                        val domain = email.substringAfterLast("@").lowercase()
+                                        val allowedDomains = listOf(
+                                            "gmail.com", "saveetha.com", "outlook.com", "hotmail.com", "live.com",
+                                            "yahoo.com", "yahoo.co.in", "icloud.com", "zoho.com", "protonmail.com",
+                                            "yandex.com", "aol.com", "mail.com"
+                                        )
+                                        val isFormatValid = emailPattern.matcher(email).matches()
+                                        val isDomainAllowed = allowedDomains.any { domain == it || domain.endsWith(".$it") }
+                                        
+                                        if (!isFormatValid) {
+                                            emailError = "Invalid email format"
+                                            hasError = true
+                                        } else if (!isDomainAllowed) {
+                                            emailError = "Email domain not allowed. Please use a trusted provider."
+                                            hasError = true
+                                        }
                                     }
                                     
                                     if (phone.isBlank()) {

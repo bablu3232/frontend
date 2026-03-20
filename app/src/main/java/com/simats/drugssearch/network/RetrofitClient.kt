@@ -7,8 +7,8 @@ import java.util.concurrent.TimeUnit
 
 object RetrofitClient {
     // Updated to your machine's IP address (from ipconfig)
-    private const val BASE_URL = "http://14.139.187.229:8081/jan2026/drugsearch/"
-    const val IMAGE_BASE_URL = "http://14.139.187.229:8081/jan2026/drugsearch/"
+    private const val BASE_URL = "http://14.139.187.229:8081/jan2026/spic741/drugsearch/"
+    const val IMAGE_BASE_URL = "http://14.139.187.229:8081/jan2026/spic741/drugsearch/"
     
     // NOTE: If your IP changes (e.g., reconnecting Wi-Fi), you must update this!
 

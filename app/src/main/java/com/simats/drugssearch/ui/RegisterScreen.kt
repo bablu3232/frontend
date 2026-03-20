@@ -58,8 +58,15 @@ private val ErrorColor = Color(0xFFEF4444)
 // Validation functions
 private fun isValidEmail(email: String): Boolean {
     val emailPattern = android.util.Patterns.EMAIL_ADDRESS
-    // Broad validation: Must be a valid email format (supports college/institutional emails)
-    return email.isNotEmpty() && emailPattern.matcher(email).matches()
+    if (email.isEmpty() || !emailPattern.matcher(email).matches()) return false
+    
+    val domain = email.substringAfterLast("@").lowercase()
+    val allowedDomains = listOf(
+        "gmail.com", "saveetha.com", "outlook.com", "hotmail.com", "live.com",
+        "yahoo.com", "yahoo.co.in", "icloud.com", "zoho.com", "protonmail.com",
+        "yandex.com", "aol.com", "mail.com"
+    )
+    return allowedDomains.any { domain == it || domain.endsWith(".$it") }
 }
 
 private fun isValidName(name: String): Boolean {
@@ -644,7 +651,7 @@ fun RegisterScreen(
                             
                             // Validate email
                             if (!isValidEmail(email)) {
-                                emailError = "Please enter a valid email address"
+                                emailError = "Email domain not allowed. Please use a trusted provider (e.g., Gmail, Saveetha)."
                                 hasError = true
                             }
                             
